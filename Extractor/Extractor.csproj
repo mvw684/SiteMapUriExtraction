@@ -22,4 +22,8 @@
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SiteMapUriExtraction\SiteMapUriExtraction.csproj" />
+  </ItemGroup>
+
 </Project>
