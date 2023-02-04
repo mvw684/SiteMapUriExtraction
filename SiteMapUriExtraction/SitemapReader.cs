@@ -5,11 +5,38 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SiteMapUriExtractor {
+
+    /// <summary>
+    /// Read site map files, see http://www.sitemaps.org/schemas/sitemap/
+    /// </summary>
     public class SitemapReader {
-        public void Load(List<string> sitemaps) {
-            throw new NotImplementedException();
+
+        private readonly Dictionary<Uri, Page> pages = new Dictionary<Uri, Page>();
+        private readonly UriCache cache;
+
+        /// <summary>
+        /// Construct the site map reader with the cache
+        /// </summary>
+        public SitemapReader(UriCache cache) {
+            this.cache = cache;
         }
 
+        /// <summary>
+        /// Load the provided site maps
+        /// </summary>
+        public void Load(List<string> sitemaps) {
+            foreach(var sitemapUri in sitemaps) {
+                Load(new Uri(sitemapUri));
+            }
+        }
+
+        private void Load(Uri uri) {
+            var stream = cache.Fetch(uri);
+        }
+
+        /// <summary>
+        /// get all html pages from the parsed site maps
+        /// </summary>
         public List<Page> GetPagesFromSitemaps() {
             throw new NotImplementedException();
         }
