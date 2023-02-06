@@ -58,42 +58,29 @@ namespace SiteMapUriExtractor {
             }
             if (needsHeader) {
                 var getHeadTask = client.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
-                getHeadTask.Wait(); 
-                if (!getHeadTask.IsCompletedSuccessfully) {
-                    var exception = getHeadTask.Exception;
-                    if (exception is null) {
-                        throw new OperationFailedException($"HEAD {uri}, {getHeadTask.Result.StatusCode} {getHeadTask.Result.ReasonPhrase}");
-                    } else {
-                        throw new OperationFailedException($"HEAD {uri}", exception);
-
-                    }
-                }
+                getHeadTask.Wait();
+                OperationFailedException.ThrowIfFailed("HEAD", uri, getHeadTask);
                 var header = getHeadTask.Result;
-                if (header.IsSuccessStatusCode) {
-                    var contentType = header.Headers.Where(a => a.Key == "Content - Type").First().Value;
-                    // TODO: decide whether we can return cached data or need to reread from server
-                    throw new NotImplementedException();
-                } else {
-                    throw new OperationFailedException($"HEAD {uri}, {header.StatusCode} {header.ReasonPhrase}");
-                }
-            }
-
-            var getContentTask = client.GetAsync(uri);
-            getContentTask.Wait();
-
-            if (getContentTask.IsCompletedSuccessfully) {
-                var content = getContentTask.Result;
-                // TODO: create cached data from contents
+                var contentType = header.Headers.Where(a => a.Key == "Content - Type").First().Value;
+                // TODO: decide whether we can return cached data or need to reread from server
                 throw new NotImplementedException();
-
             }
-            GC.KeepAlive(needsGet);
-            throw new NotImplementedException();
 
+            result = new CachedUriData(uri, cachedFileLocation);
+
+            if (needsGet) {
+                result.GetFromServer(client);
+            }
+            cachedData[uri] = result;
+            return result;
         }
 
         private DirectoryInfo GetCachedFileLocation(Uri uri) {
-            string path = Path.Combine(cacheFolder.FullName, uri.Host, uri.AbsolutePath);
+
+            string uriPath = uri.AbsolutePath;
+            uriPath = uriPath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            uriPath = uriPath.Trim(Path.DirectorySeparatorChar);
+            string path = Path.Combine(cacheFolder.FullName, uri.Host, uriPath);
             var result = new DirectoryInfo(path);
             return result;
         }

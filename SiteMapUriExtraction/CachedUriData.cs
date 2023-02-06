@@ -8,31 +8,59 @@ namespace SiteMapUriExtractor {
     /// Cached data for a specific Uri including relevant meta data
     /// </summary>
     public class CachedUriData {
-        private DirectoryInfo cachedFileLocation;
         private Uri uri;
-        private FileInfo metaDataFile;
         private Dictionary<string, string> metaData = new Dictionary<string, string>(StringComparer.Ordinal);
+        private CachedFileData cachedFile;
+
+        private static CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         /// <summary>
         /// Create an instance of cached data with a well known location and URI
         /// </summary>
-        public CachedUriData(Uri uri, DirectoryInfo cachedFileLocation) {
+        public CachedUriData(Uri uri, CachedFileData cachedFile) {
             this.uri = uri;
-            this.cachedFileLocation = cachedFileLocation;
-            metaDataFile = new FileInfo(Path.Combine(cachedFileLocation.FullName, "metData.json"));
-            if (metaDataFile.Exists) {
-                var doc = JsonDocument.Parse(metaDataFile.OpenRead());
-                foreach(var property in doc.RootElement.EnumerateObject()) {
-                    metaData.Add(property.Name, property.Value.ToString());
-                }
-            }
+            this.cachedFile= cachedFile;
         }
 
         /// <summary>
         /// Last modification of the meat data
         /// </summary>
-        public DateTime LastModfied => metaDataFile.Exists ? metaDataFile.LastWriteTime : DateTime.MinValue;
+        public DateTime LastWriteTime => cachedFile.LastWriteTime;
 
+        /// <summary>
+        /// Retrieve data from server and put in cache
+        /// </summary>
+        public void GetFromServer(HttpClient client) {
+            var getContentTask = client.GetAsync(uri);
 
+            getContentTask.Wait();
+            OperationFailedException.ThrowIfFailed("GET", uri, getContentTask);
+
+            metaData.Clear();
+            var content = getContentTask.Result.Content;
+            var contentType = content.Headers.ContentType;
+            foreach (var header in content.Headers) {
+                string key = header.Key;
+                string value = String.Join("/", header.Value);
+                metaData.Add(key, value);
+            }
+
+            string extension = ".contents";
+            switch (contentType?.MediaType) {
+                case "text/xml":
+                    extension = ".xml";
+                    break;
+                default:
+                    throw new NotImplementedException("Cannot cache content type " + contentType);
+            }
+            if (cachedFile.Exists)
+
+            contentFile = new FileInfo(Path.Combine(cachedFileLocation.FullName, "contents" + extension));
+            content.CopyTo(contentFile.OpenWrite(), null, cancellationTokenSource.Token);
+            contentFile.Refresh();
+
+            JsonSerializer.Serialize(metaDataFile.OpenWrite(), metaData, metaData.GetType());
+
+        }
     }
 }

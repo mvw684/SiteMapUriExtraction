@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace SiteMapUriExtractor {
 
     /// <summary>
-    /// represents an html page on a website
+    /// represents a page on a website
     /// </summary>
     public class Page {
 
