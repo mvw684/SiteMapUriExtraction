@@ -41,6 +41,13 @@ namespace SiteMapUriExtractor {
             get => extension;
             [MemberNotNull(nameof(File), nameof(extension))]
             set {
+                if (
+                    File is not null &&
+                    value is not null &&
+                    StringComparer.OrdinalIgnoreCase.Equals(extension, value)
+                ) {
+                    return;
+                }
                 extension = value ?? throw new ArgumentNullException(nameof(value));
                 File = new FileInfo(Path.Combine(folder.FullName, fileName + "." + extension));
             }

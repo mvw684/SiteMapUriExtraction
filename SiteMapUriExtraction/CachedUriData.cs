@@ -8,9 +8,8 @@ namespace SiteMapUriExtractor {
     /// Cached data for a specific Uri including relevant meta data
     /// </summary>
     public class CachedUriData {
-        private Uri uri;
-        private Dictionary<string, string> metaData = new Dictionary<string, string>(StringComparer.Ordinal);
-        private CachedFileData cachedFile;
+        private readonly Uri uri;
+        private readonly CachedFileData cachedFile;
 
         private static CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
@@ -23,7 +22,7 @@ namespace SiteMapUriExtractor {
         }
 
         /// <summary>
-        /// Last modification of the meat data
+        /// Last modification of the meta data
         /// </summary>
         public DateTime LastWriteTime => cachedFile.LastWriteTime;
 
@@ -35,17 +34,9 @@ namespace SiteMapUriExtractor {
 
             getContentTask.Wait();
             OperationFailedException.ThrowIfFailed("GET", uri, getContentTask);
-
-            metaData.Clear();
             var content = getContentTask.Result.Content;
             var contentType = content.Headers.ContentType;
-            foreach (var header in content.Headers) {
-                string key = header.Key;
-                string value = String.Join("/", header.Value);
-                metaData.Add(key, value);
-            }
-
-            string extension = ".contents";
+            string extension;
             switch (contentType?.MediaType) {
                 case "text/xml":
                     extension = ".xml";
@@ -53,14 +44,9 @@ namespace SiteMapUriExtractor {
                 default:
                     throw new NotImplementedException("Cannot cache content type " + contentType);
             }
-            if (cachedFile.Exists)
-
-            contentFile = new FileInfo(Path.Combine(cachedFileLocation.FullName, "contents" + extension));
-            content.CopyTo(contentFile.OpenWrite(), null, cancellationTokenSource.Token);
-            contentFile.Refresh();
-
-            JsonSerializer.Serialize(metaDataFile.OpenWrite(), metaData, metaData.GetType());
-
+            cachedFile.Extension = extension;
+            content.CopyTo(cachedFile.File.OpenWrite(), null, cancellationTokenSource.Token);
+            cachedFile.File.Refresh();
         }
     }
 }

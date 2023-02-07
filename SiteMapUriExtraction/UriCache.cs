@@ -18,7 +18,7 @@ namespace SiteMapUriExtractor {
         /// </summary>
         public UriCache(DirectoryInfo cacheFolder, RetentionPolicy retention) {
             this.cacheFolder = cacheFolder;
-            if (retention is RetentionPolicy.None) { 
+            if (retention is RetentionPolicy.None) {
                 this.retention = RetentionPolicy.Header;
             } else {
                 this.retention = retention;
@@ -34,13 +34,11 @@ namespace SiteMapUriExtractor {
                 return result;
             }
 
-            DirectoryInfo cachedFileLocation = GetCachedFileLocation(uri);
+            var cachedFileLocation = GetCachedFileLocation(uri);
             bool needsHeader = false;
             bool needsGet = false;
 
             if (cachedFileLocation.Exists) {
-                result = new CachedUriData(uri, cachedFileLocation);
-
                 var age = DateTime.Now - cachedFileLocation.LastWriteTime;
                 if (retention == RetentionPolicy.Header) {
                     needsHeader = true;
@@ -75,13 +73,18 @@ namespace SiteMapUriExtractor {
             return result;
         }
 
-        private DirectoryInfo GetCachedFileLocation(Uri uri) {
+        private CachedFileData GetCachedFileLocation(Uri uri) {
 
             string uriPath = uri.AbsolutePath;
             uriPath = uriPath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
             uriPath = uriPath.Trim(Path.DirectorySeparatorChar);
             string path = Path.Combine(cacheFolder.FullName, uri.Host, uriPath);
-            var result = new DirectoryInfo(path);
+
+            string folder = Path.GetDirectoryName(path)!;
+            string fullFileName = Path.GetFileName(path);
+            string fileName = Path.GetFileName(fullFileName);
+            string extension = Path.GetExtension(fullFileName);
+            var result = new CachedFileData(folder, fileName, extension);
             return result;
         }
     }
