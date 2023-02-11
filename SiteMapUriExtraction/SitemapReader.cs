@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace SiteMapUriExtractor {
 
@@ -31,7 +32,24 @@ namespace SiteMapUriExtractor {
         }
 
         private void Load(Uri uri) {
-            var stream = cache.Fetch(uri);
+            var cachedData = cache.Fetch(uri);
+
+            XmlDocument doc = new XmlDocument();
+            doc.Load(cachedData.CachedFile.FullName);
+            var root = doc.DocumentElement;
+            if (root?.Name == "sitemapindex") {
+                ReadSiteMapIndex(root);
+            } else if (root?.Name == "urlset") {
+                ReadSiteMap(root);
+            }
+        }
+
+        private void ReadSiteMap(XmlElement root) {
+            throw new NotImplementedException();
+        }
+
+        private void ReadSiteMapIndex(XmlElement root) {
+            throw new NotImplementedException();
         }
 
         /// <summary>

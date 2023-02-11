@@ -27,6 +27,11 @@ namespace SiteMapUriExtractor {
         public DateTime LastWriteTime => cachedFile.LastWriteTime;
 
         /// <summary>
+        /// The file from cache
+        /// </summary>
+        public FileInfo CachedFile => cachedFile.Exists ? cachedFile.File : throw new FileNotFoundException(uri.ToString());
+
+        /// <summary>
         /// Retrieve data from server and put in cache
         /// </summary>
         public void GetFromServer(HttpClient client) {
@@ -45,7 +50,9 @@ namespace SiteMapUriExtractor {
                     throw new NotImplementedException("Cannot cache content type " + contentType);
             }
             cachedFile.Extension = extension;
-            content.CopyTo(cachedFile.File.OpenWrite(), null, cancellationTokenSource.Token);
+            using (var cachedData = cachedFile.File.OpenWrite()) {
+                content.CopyTo(cachedData, null, cancellationTokenSource.Token);
+            }
             cachedFile.File.Refresh();
         }
     }

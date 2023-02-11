@@ -22,7 +22,7 @@ namespace SiteMapUriExtractor {
             folder = new DirectoryInfo(folderPath);
             this.fileName = fileName;
             this.extension = extension;
-
+            folder.Create();
             if (extension is null) {
                 var files = folder.GetFiles(fileName + ".*");
                 if (files.Length == 1) {
@@ -49,13 +49,13 @@ namespace SiteMapUriExtractor {
                     return;
                 }
                 extension = value ?? throw new ArgumentNullException(nameof(value));
-                File = new FileInfo(Path.Combine(folder.FullName, fileName + "." + extension));
+                File = new FileInfo(Path.Combine(folder.FullName, fileName + extension));
             }
         }
 
         /// <summary>
         /// Current cached <see cref="FileInfo"/> (can be null if extension is not yet known)
-        /// </summary>
+        /// </summary> 
         public FileInfo? File {
             get => file;
             private set => file = value;

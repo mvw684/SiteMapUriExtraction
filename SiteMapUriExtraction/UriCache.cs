@@ -82,7 +82,7 @@ namespace SiteMapUriExtractor {
 
             string folder = Path.GetDirectoryName(path)!;
             string fullFileName = Path.GetFileName(path);
-            string fileName = Path.GetFileName(fullFileName);
+            string fileName = Path.GetFileNameWithoutExtension(fullFileName);
             string extension = Path.GetExtension(fullFileName);
             var result = new CachedFileData(folder, fileName, extension);
             return result;
