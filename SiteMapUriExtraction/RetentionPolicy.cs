@@ -12,9 +12,9 @@ namespace SiteMapUriExtractor {
         None = 0,
 
         /// <summary>
-        /// Check header
+        /// Download 
         /// </summary>
-        Header,
+        Hour,
 
         /// <summary>
         /// If cached contents is older as one day, check via header, otherwise use cache

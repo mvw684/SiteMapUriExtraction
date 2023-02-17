@@ -25,9 +25,10 @@ namespace SiteMapUriExtractor {
                 Console.WriteLine(Process.GetCurrentProcess().ProcessName + "Site map is expected to conform to http://www.sitemaps.org/schemas/");
                 Console.WriteLine(Process.GetCurrentProcess().ProcessName + "Output folder: will contain cached files and generated reports");
                 Console.WriteLine(Process.GetCurrentProcess().ProcessName + "Retention policy: ");
-                Console.WriteLine(Process.GetCurrentProcess().ProcessName + "    Header: always check header to decide on refreshing cache");
-                Console.WriteLine(Process.GetCurrentProcess().ProcessName + "    Day: check header if cached contents is older as one day");
-                Console.WriteLine(Process.GetCurrentProcess().ProcessName + "    Week: check header if cached contents is older as one week");
+                Console.WriteLine(Process.GetCurrentProcess().ProcessName + "    Nothing specified: if modified always fetch");
+                Console.WriteLine(Process.GetCurrentProcess().ProcessName + "    Hour: if modified less then an hour ago use cache");
+                Console.WriteLine(Process.GetCurrentProcess().ProcessName + "    Day: if modified less then a day ago use cache");
+                Console.WriteLine(Process.GetCurrentProcess().ProcessName + "    Week: if modified less then a week ago use cache");
                 return 0;
             } 
             List<string> sitemaps = new List<string>();
@@ -68,6 +69,9 @@ namespace SiteMapUriExtractor {
 
         private static void Execute(List<string> sitemaps, string outputFolderName, RetentionPolicy retention) {
             var outputFolder = new DirectoryInfo(outputFolderName);
+            outputFolder.Create();
+            var showOutputFolder= new ProcessStartInfo { FileName = "explorer.exe", Arguments = outputFolderName };
+            Process.Start(showOutputFolder);
             var cache = new UriCache(outputFolder.CreateSubdirectory("Cache"), retention);
             var sitemapReader = new SitemapReader(cache);
             sitemapReader.Load(sitemaps);
@@ -75,6 +79,7 @@ namespace SiteMapUriExtractor {
             foreach (var page in pages) {
                 page.load();
             }
+            
         }
     }
 }

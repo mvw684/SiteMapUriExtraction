@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,15 +28,17 @@ namespace SiteMapUriExtractor {
         /// </summary>
         public void Load(List<string> sitemaps) {
             foreach(var sitemapUri in sitemaps) {
-                Load(new Uri(sitemapUri));
+                // assume changed, so fetch from server
+                Load(new Uri(sitemapUri), DateTime.Now);
             }
         }
 
-        private void Load(Uri uri) {
-            var cachedData = cache.Fetch(uri);
+        private void Load(Uri uri, DateTime lastModified) {
+            var cachedData = cache.Fetch(uri, lastModified);
 
             XmlDocument doc = new XmlDocument();
             doc.Load(cachedData.CachedFile.FullName);
+
             var root = doc.DocumentElement;
             if (root?.Name == "sitemapindex") {
                 ReadSiteMapIndex(root);
@@ -45,10 +48,40 @@ namespace SiteMapUriExtractor {
         }
 
         private void ReadSiteMap(XmlElement root) {
-            throw new NotImplementedException();
+            foreach(XmlNode node in root.ChildNodes) {
+                if (node.Name == "sitemap") {
+                    var locNode = node["loc"];
+                    var lastModNode = node["lastmod"];
+
+                    var siteMapUriString = locNode?.InnerText;
+                    var lastModString = lastModNode?.InnerText;
+                    if (!string.IsNullOrEmpty(siteMapUriString) && !string.IsNullOrEmpty(lastModString)) {
+                        var uri = new Uri(siteMapUriString);
+                        var lastModified = DateTime.ParseExact(lastModString, "O", CultureInfo.InvariantCulture).ToLocalTime();
+                        AddPage(uri, lastModified);
+                    }
+                }
+            }
         }
 
         private void ReadSiteMapIndex(XmlElement root) {
+            foreach (XmlNode node in root.ChildNodes) {
+                if (node.Name == "sitemap") {
+                    var locNode = node["loc"];
+                    var lastModNode = node["lastmod"];
+
+                    var siteMapUriString = locNode?.InnerText;
+                    var lastModString = lastModNode?.InnerText;
+                    if (!string.IsNullOrEmpty(siteMapUriString) && !string.IsNullOrEmpty(lastModString)) {
+                        var uri = new Uri(siteMapUriString);
+                        var lastModified = DateTime.ParseExact(lastModString, "O", CultureInfo.InvariantCulture).ToLocalTime();
+                        Load(uri, lastModified);
+                    }
+                }
+            }
+        }
+
+        private void AddPage(Uri uri, DateTime lastModified) {
             throw new NotImplementedException();
         }
 
