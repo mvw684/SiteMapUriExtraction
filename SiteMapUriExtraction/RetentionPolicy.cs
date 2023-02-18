@@ -12,7 +12,7 @@ namespace SiteMapUriExtractor {
         None = 0,
 
         /// <summary>
-        /// Download 
+        /// Download if older as one hour
         /// </summary>
         Hour,
 

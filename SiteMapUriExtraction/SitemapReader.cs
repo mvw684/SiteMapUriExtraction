@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -33,7 +34,7 @@ namespace SiteMapUriExtractor {
             }
         }
 
-        private void Load(Uri uri, DateTime lastModified) {
+        private void Load(Uri uri, DateTimeOffset lastModified) {
             var cachedData = cache.Fetch(uri, lastModified);
 
             XmlDocument doc = new XmlDocument();
@@ -49,15 +50,10 @@ namespace SiteMapUriExtractor {
 
         private void ReadSiteMap(XmlElement root) {
             foreach(XmlNode node in root.ChildNodes) {
-                if (node.Name == "sitemap") {
+                if (node.Name == "url") {
                     var locNode = node["loc"];
                     var lastModNode = node["lastmod"];
-
-                    var siteMapUriString = locNode?.InnerText;
-                    var lastModString = lastModNode?.InnerText;
-                    if (!string.IsNullOrEmpty(siteMapUriString) && !string.IsNullOrEmpty(lastModString)) {
-                        var uri = new Uri(siteMapUriString);
-                        var lastModified = DateTime.ParseExact(lastModString, "O", CultureInfo.InvariantCulture).ToLocalTime();
+                    if (ParseLoc(locNode, lastModNode, out var uri, out var lastModified)) { 
                         AddPage(uri, lastModified);
                     }
                 }
@@ -69,27 +65,44 @@ namespace SiteMapUriExtractor {
                 if (node.Name == "sitemap") {
                     var locNode = node["loc"];
                     var lastModNode = node["lastmod"];
-
-                    var siteMapUriString = locNode?.InnerText;
-                    var lastModString = lastModNode?.InnerText;
-                    if (!string.IsNullOrEmpty(siteMapUriString) && !string.IsNullOrEmpty(lastModString)) {
-                        var uri = new Uri(siteMapUriString);
-                        var lastModified = DateTime.ParseExact(lastModString, "O", CultureInfo.InvariantCulture).ToLocalTime();
+                    if (ParseLoc(locNode, lastModNode, out var uri, out var lastModified)) { 
                         Load(uri, lastModified);
                     }
                 }
             }
         }
 
-        private void AddPage(Uri uri, DateTime lastModified) {
-            throw new NotImplementedException();
+        private static bool ParseLoc(
+            XmlElement? locNode,
+            XmlElement? lastModNode,
+            out Uri uri,
+            out DateTimeOffset lastModified
+        ) {
+            var siteMapUriString = locNode?.InnerText;
+            var lastModString = lastModNode?.InnerText;
+            bool ok = false;
+            if (!string.IsNullOrEmpty(siteMapUriString) && !string.IsNullOrEmpty(lastModString)) {
+                uri = new Uri(siteMapUriString);
+                lastModified = DateTimeOffset.ParseExact(lastModString, "yyyy-MM-ddTHH:mm:sszzz", CultureInfo.InvariantCulture).ToLocalTime();
+                ok = true;
+            } else {
+                uri = new Uri("http://unknown");
+                lastModified = DateTime.MinValue;
+            }
+            return ok;
+        }
+
+        private void AddPage(Uri uri, DateTimeOffset lastModified) {
+            var cachedData = cache.Fetch(uri, lastModified);
+            var page = new Page(cachedData);
+            pages.Add(uri, page);
         }
 
         /// <summary>
         /// get all html pages from the parsed site maps
         /// </summary>
         public List<Page> GetPagesFromSitemaps() {
-            throw new NotImplementedException();
+            return pages.Values.ToList();
         }
     }
 }

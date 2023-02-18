@@ -37,7 +37,7 @@ namespace SiteMapUriExtractor {
         /// <summary>
         /// Fetch content for a specific URI
         /// </summary>
-        public CachedUriData Fetch(Uri uri, DateTime lastModified) {
+        public CachedUriData Fetch(Uri uri, DateTimeOffset lastModified) {
             if (cachedData.TryGetValue(uri, out var result)) {
                 return result;
             }
@@ -46,7 +46,10 @@ namespace SiteMapUriExtractor {
             bool needsGet = false;
 
             if (cachedFileLocation.Exists) {
-                if (lastModified + retention > cachedFileLocation.LastWriteTime) {
+                var actualTime = cachedFileLocation.LastWriteTime.ToString("s");
+                var toCheck = (lastModified + retention).ToString("s");
+
+                if (lastModified + retention < cachedFileLocation.LastWriteTime) {
                     needsGet = true;
                 }
             } else {
