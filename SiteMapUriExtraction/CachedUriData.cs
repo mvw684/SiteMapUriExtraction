@@ -27,6 +27,11 @@ namespace SiteMapUriExtractor {
         public DateTime LastWriteTime => cachedFile.LastWriteTime;
 
         /// <summary>
+        /// The cached original URI
+        /// </summary>
+        public Uri Uri => uri;
+
+        /// <summary>
         /// The file from cache
         /// </summary>
         public FileInfo CachedFile => cachedFile.Exists ? cachedFile.File : throw new FileNotFoundException(uri.ToString());

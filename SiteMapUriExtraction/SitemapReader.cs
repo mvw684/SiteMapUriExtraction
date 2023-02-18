@@ -99,10 +99,8 @@ namespace SiteMapUriExtractor {
         }
 
         /// <summary>
-        /// get all html pages from the parsed site maps
+        /// get all pages from the parsed site maps
         /// </summary>
-        public List<Page> GetPagesFromSitemaps() {
-            return pages.Values.ToList();
-        }
+        public List<Page> Pages =>pages.Values.ToList();
     }
 }

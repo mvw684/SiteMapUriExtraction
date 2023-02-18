@@ -75,9 +75,9 @@ namespace SiteMapUriExtractor {
             var cache = new UriCache(outputFolder.CreateSubdirectory("Cache"), retention);
             var sitemapReader = new SitemapReader(cache);
             sitemapReader.Load(sitemaps);
-            var pages = sitemapReader.GetPagesFromSitemaps();
+            var pages = sitemapReader.Pages;
             foreach (var page in pages) {
-                page.load();
+                page.Parse();
             }
             
         }

@@ -2,9 +2,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using HtmlAgilityPack;
 
 namespace SiteMapUriExtractor {
 
@@ -27,9 +30,20 @@ namespace SiteMapUriExtractor {
         /// Load the page and extract URIs and other relevant data
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
-        public void load() {
-            GC.KeepAlive(data);
-            throw new NotImplementedException();
+        public void Parse() {
+            var fileName = data.CachedFile.FullName;
+            if (fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase)) {
+                var doc = new HtmlDocument();
+                doc.LoadHtml(fileName);
+                var root = doc.DocumentNode;
+                var title = root.SelectSingleNode("//head//title");
+                GC.KeepAlive(title);
+            }
         }
+
+        /// <summary>
+        /// The Uri of this Page
+        /// </summary>
+        public Uri Uri => data.Uri;
     }
 }
