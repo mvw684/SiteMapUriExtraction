@@ -10,7 +10,7 @@ namespace SiteMapUriExtractor {
         private readonly HttpClient client;
         private readonly TimeSpan retention;
         private Dictionary<Uri, CachedUriData> cachedData = new Dictionary<Uri, CachedUriData> ();
-        private Dictionary<Uri, CachedUriState> cachedState = new Dictionary<Uri, CachedUriState> ();
+        private Dictionary<string, CachedUriState> cachedState = new Dictionary<string, CachedUriState> (StringComparer.Ordinal);
 
         /// <summary>
         /// Create the cache with a <see cref="Directory">location</see> and a <see cref="RetentionPolicy"/>
@@ -38,7 +38,7 @@ namespace SiteMapUriExtractor {
         /// <summary>
         /// Fetch content for a specific URI
         /// </summary>
-        public CachedUriData Fetch(Uri uri, DateTimeOffset lastModified) {
+        public CachedUriData Fetch(Uri uri, DateTimeOffset? lastModified) {
             if (cachedData.TryGetValue(uri, out var result)) {
                 return result;
             }
@@ -53,8 +53,8 @@ namespace SiteMapUriExtractor {
 
                 var cachedAt = cachedTime.ToString("s");
                 var expiresAt = expirationTime.ToString("s");
-                var modifedAt = lastModified.ToString("s");
-                var okForReuse = expirationTime > lastModified;
+                var modifedAt = lastModified?.ToString("s");
+                var okForReuse = lastModified is not null ? expirationTime > lastModified : false;
                 
                 if (!okForReuse){
                     needsGet = result.IsModifiedOnServer(client, retention);
@@ -75,6 +75,25 @@ namespace SiteMapUriExtractor {
             }
             cachedData[uri] = result;
             return result;
+        }
+
+        /// <summary>
+        /// get URI state (existence etc)
+        /// </summary>
+        public CachedUriState GetState(Uri uri) {
+
+            if (cachedState.TryGetValue(uri.AbsoluteUri, out var state)) {
+                return state;
+            }
+
+            if (cachedData.TryGetValue(uri, out var data)) {
+                state = new CachedUriState(uri, true);
+            } else {
+                state = new CachedUriState(uri);
+                state.CheckOnServer(client);
+            }
+            cachedState.Add(uri.AbsoluteUri, state);
+            return state;
         }
 
         private CachedFileData GetCachedFileLocation(Uri uri) {

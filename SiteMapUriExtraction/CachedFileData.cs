@@ -23,7 +23,7 @@ namespace SiteMapUriExtractor {
             this.fileName = fileName;
             this.extension = extension;
             folder.Create();
-            if (extension is null) {
+            if (string.IsNullOrEmpty(extension)) {
                 var files = folder.GetFiles(fileName + ".*");
                 if (files.Length == 1) {
                     file = files[0];

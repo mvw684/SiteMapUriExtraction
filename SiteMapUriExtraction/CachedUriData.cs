@@ -43,7 +43,8 @@ namespace SiteMapUriExtractor {
         public bool IsModifiedOnServer(HttpClient client, TimeSpan retention) {
             var lastModified = LastWriteTime;
             var request = new HttpRequestMessage(HttpMethod.Head, uri);
-            request.Headers.Add("If-Modified-Since", lastModified.ToUniversalTime().ToString("R"));
+            request.Headers.IfModifiedSince = lastModified - retention;
+            //request.Headers.Add("If-Modified-Since", lastModified.ToUniversalTime().ToString("R"));
 
             var getHeadTask = client.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
             getHeadTask.Wait();
@@ -64,6 +65,9 @@ namespace SiteMapUriExtractor {
                 var value = String.Join("/", header.Value);
                 Console.WriteLine($"ContentHeader: {key} = {value}");
             }
+            if (headerResponse.StatusCode == System.Net.HttpStatusCode.NotModified) {
+                return false;
+            }
             return headerResponse.IsSuccessStatusCode;
         }
 
@@ -73,7 +77,7 @@ namespace SiteMapUriExtractor {
         public void GetFromServer(HttpClient client) {
 
 
-            var getContentTask = client.SendAsync(new HttpRequestMessage(HttpMethod.Get, uri));
+            var getContentTask = client.GetAsync(uri);
 
             getContentTask.Wait();
             getContentTask.ThrowIfRequestFailed("GET", uri);

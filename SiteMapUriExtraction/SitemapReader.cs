@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿// Copyright Mark J. van Wijk 2023
+
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace SiteMapUriExtractor {
@@ -16,6 +12,7 @@ namespace SiteMapUriExtractor {
 
         private readonly Dictionary<Uri, Page> pages = new Dictionary<Uri, Page>();
         private readonly UriCache cache;
+        private Uri? rootUri;
 
         /// <summary>
         /// Construct the site map reader with the cache
@@ -29,12 +26,13 @@ namespace SiteMapUriExtractor {
         /// </summary>
         public void Load(List<string> sitemaps) {
             foreach(var sitemapUri in sitemaps) {
-                // assume changed long ago
-                Load(new Uri(sitemapUri), DateTimeOffset.MinValue);
+                // assume cache is outdated, so add a date guaranteed newer as the cache
+                Load(new Uri(sitemapUri), null);
             }
         }
 
-        private void Load(Uri uri, DateTimeOffset lastModified) {
+        private void Load(Uri uri, DateTimeOffset? lastModified) {
+            rootUri = new Uri(uri, ".");
             var cachedData = cache.Fetch(uri, lastModified);
 
             XmlDocument doc = new XmlDocument();
@@ -53,7 +51,7 @@ namespace SiteMapUriExtractor {
                 if (node.Name == "url") {
                     var locNode = node["loc"];
                     var lastModNode = node["lastmod"];
-                    if (ParseLoc(locNode, lastModNode, out var uri, out var lastModified)) { 
+                    if (ParseLoc(locNode, lastModNode, out var uri, out var lastModified)) {
                         AddPage(uri, lastModified);
                     }
                 }
@@ -102,5 +100,10 @@ namespace SiteMapUriExtractor {
         /// get all pages from the parsed site maps
         /// </summary>
         public List<Page> Pages =>pages.Values.ToList();
+
+        /// <summary>
+        /// Root URI
+        /// </summary>
+        public Uri Root => rootUri is null ? new Uri("https://unknown") : rootUri;
     }
 }
