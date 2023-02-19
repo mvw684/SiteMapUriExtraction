@@ -60,6 +60,8 @@ namespace SiteMapUriExtractor {
                 var value = String.Join("/", header.Value);
                 Console.WriteLine($"ContentHeader: {key} = {value}");
             }
+            headerResponse.Dispose();
+            getHeadTask.Dispose();
         }
     }
 }

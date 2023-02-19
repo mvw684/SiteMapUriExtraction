@@ -64,10 +64,16 @@ namespace SiteMapUriExtractor {
                 var value = String.Join("/", header.Value);
                 Console.WriteLine($"ContentHeader: {key} = {value}");
             }
-            if (headerResponse.StatusCode == System.Net.HttpStatusCode.NotModified) {
+
+            var status = headerResponse.StatusCode;
+            bool success = headerResponse.IsSuccessStatusCode;
+            request.Dispose();
+            headerResponse.Dispose();
+            getHeadTask.Dispose();
+            if (status == System.Net.HttpStatusCode.NotModified) {
                 return false;
             }
-            return headerResponse.IsSuccessStatusCode;
+            return success;
         }
 
         /// <summary>
@@ -77,7 +83,6 @@ namespace SiteMapUriExtractor {
 
 
             var getContentTask = client.GetAsync(uri);
-
             getContentTask.Wait();
             getContentTask.ThrowIfRequestFailed("GET", uri);
             var content = getContentTask.Result.Content;
@@ -97,6 +102,8 @@ namespace SiteMapUriExtractor {
             using (var cachedData = cachedFile.File.OpenWrite()) {
                 content.CopyTo(cachedData, null, cancellationTokenSource.Token);
             }
+            content.Dispose();
+            getContentTask.Dispose();
             cachedFile.File.Refresh();
         }
     }
