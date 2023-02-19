@@ -11,12 +11,18 @@ namespace SiteMapUriExtractor {
     /// </summary>
     public class Page {
 
-        internal class Reference {
+        /// <summary>
+        /// Reference to other URI or Page
+        /// </summary>
+        public class Reference {
             private readonly Page sourcePage;
             private readonly string name;
             private readonly CachedUriState state;
             private readonly Page? targetPage;
 
+            /// <summary>
+            /// Constructor
+            /// </summary>
             public Reference(Page sourcePage, string name, CachedUriState state, Page? targePage) {
                 this.sourcePage = sourcePage;
                 this.name = name;
@@ -24,8 +30,14 @@ namespace SiteMapUriExtractor {
                 this.targetPage = targePage;
             }
 
+            /// <summary>
+            /// Name, href text
+            /// </summary>
             public string Name => name;
 
+            /// <summary>
+            /// State of the target (existence etc.)
+            /// </summary>
             public CachedUriState State => state;
         }
 
@@ -68,14 +80,19 @@ namespace SiteMapUriExtractor {
                     }
                     var text = reference.InnerText.Trim();
                     var state = cache.GetState(targetUri);
-                    Console.WriteLine($"{data.Uri.AbsoluteUri} -- {text} -> {targetUri.AbsoluteUri}");
+                    
                     if (allPages.TryGetValue(targetUri, out var targetPage)) {
                         targetPage.References++;
                     }
                     var referenceData = new Reference(this, text, state, targetPage);
-                    outgoingReferences.Add(new Reference(this, text, state, targetPage));
+                    outgoingReferences.Add(referenceData);
                     if (targetPage is not null) {
                         targetPage.incomingReferences.Add(referenceData);
+                    }
+                    if (referenceData.State.PageExists) {
+                        Console.WriteLine($"{data.Uri.AbsoluteUri} -- {text} -> {targetUri.AbsoluteUri}");
+                    } else {
+                        Console.WriteLine($"{data.Uri.AbsoluteUri} -- {text} BROKEN!!!-> {targetUri.AbsoluteUri}");
                     }
                 }
             }
@@ -90,5 +107,16 @@ namespace SiteMapUriExtractor {
         /// Indication of number of incoming references
         /// </summary>
         public int References { get; private set; }
+
+
+        /// <summary>
+        /// Outgoing references to other URIs/Pages
+        /// </summary>
+        public List<Reference> OutgoingReferences => outgoingReferences;
+
+        /// <summary>
+        /// Incoming references from other Pages
+        /// </summary>
+        internal List<Reference> IncomingReferences => incomingReferences;
     }
 }
