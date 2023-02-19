@@ -1,5 +1,6 @@
 ﻿// Copyright Mark J. van Wijk 2023
 
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Xml;
 
@@ -99,7 +100,7 @@ namespace SiteMapUriExtractor {
         /// <summary>
         /// get all pages from the parsed site maps
         /// </summary>
-        public List<Page> Pages =>pages.Values.ToList();
+        public ReadOnlyDictionary<Uri, Page> Pages => new ReadOnlyDictionary<Uri, Page>(pages);
 
         /// <summary>
         /// Root URI

@@ -76,11 +76,12 @@ namespace SiteMapUriExtractor {
             var sitemapReader = new SitemapReader(cache);
             sitemapReader.Load(sitemaps);
             var pages = sitemapReader.Pages;
-            pages.Sort((a, b) => StringComparer.OrdinalIgnoreCase.Compare(a.Uri.AbsoluteUri, b.Uri.AbsoluteUri));
-            foreach (var page in pages) {
-                page.Parse(cache);
+
+            var pagesOrdered = pages.Values.ToList();
+            pagesOrdered.Sort((a, b) => StringComparer.OrdinalIgnoreCase.Compare(a.Uri.AbsoluteUri, b.Uri.AbsoluteUri));
+            foreach (var page in pagesOrdered) {
+                page.Parse(cache, pages);
             }
-            
         }
     }
 }

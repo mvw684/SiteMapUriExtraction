@@ -89,8 +89,12 @@ namespace SiteMapUriExtractor {
             if (cachedData.TryGetValue(uri, out var data)) {
                 state = new CachedUriState(uri, true);
             } else {
-                state = new CachedUriState(uri);
-                state.CheckOnServer(client);
+                if ("mailto".Equals(uri.Scheme, StringComparison.OrdinalIgnoreCase)) {
+                    state = new CachedUriState(uri, true);
+                } else {
+                    state = new CachedUriState(uri);
+                    state.CheckOnServer(client);
+                }
             }
             cachedState.Add(uri.AbsoluteUri, state);
             return state;

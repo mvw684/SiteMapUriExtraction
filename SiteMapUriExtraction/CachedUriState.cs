@@ -38,22 +38,23 @@ namespace SiteMapUriExtractor {
         /// Retrieve data from server and put in cache
         /// </summary>
         public void CheckOnServer(HttpClient client) {
+            Console.WriteLine($"Check existence: {uri.AbsoluteUri}");
             var request = new HttpRequestMessage(HttpMethod.Head, uri);
-            var getHeadTask = client.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
+            var getHeadTask = client.SendAsync(request);
             getHeadTask.Wait();
             getHeadTask.ThrowIfTaskFailed("HEAD", uri);
             var headerResponse = getHeadTask.Result;
             exists = headerResponse.IsSuccessStatusCode;
-            foreach(var header in headerResponse.Headers) {
-                var key = header.Key;
-                var value = String.Join("/", header.Value);
-                Console.WriteLine($"Header: {key} = {value}");
-            }
-            foreach (var header in headerResponse.TrailingHeaders) {
-                var key = header.Key;
-                var value = String.Join("/", header.Value);
-                Console.WriteLine($"TrailingHeader: {key} = {value}");
-            }
+            //foreach(var header in headerResponse.Headers) {
+            //    var key = header.Key;
+            //    var value = String.Join("/", header.Value);
+            //    Console.WriteLine($"Header: {key} = {value}");
+            //}
+            //foreach (var header in headerResponse.TrailingHeaders) {
+            //    var key = header.Key;
+            //    var value = String.Join("/", header.Value);
+            //    Console.WriteLine($"TrailingHeader: {key} = {value}");
+            //}
             foreach (var header in headerResponse.Content.Headers) {
                 var key = header.Key;
                 var value = String.Join("/", header.Value);

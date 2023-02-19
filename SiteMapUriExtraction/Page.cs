@@ -1,5 +1,7 @@
 ﻿// Copyright Mark J. van Wijk 2023
 
+using System.Collections.ObjectModel;
+
 using HtmlAgilityPack;
 
 namespace SiteMapUriExtractor {
@@ -10,12 +12,16 @@ namespace SiteMapUriExtractor {
     public class Page {
 
         internal class Reference {
+            private readonly Page sourcePage;
             private readonly string name;
             private readonly CachedUriState state;
+            private readonly Page? targetPage;
 
-            public Reference(string name, CachedUriState state) {
+            public Reference(Page sourcePage, string name, CachedUriState state, Page? targePage) {
+                this.sourcePage = sourcePage;
                 this.name = name;
                 this.state = state;
+                this.targetPage = targePage;
             }
 
             public string Name => name;
@@ -25,7 +31,8 @@ namespace SiteMapUriExtractor {
 
         private readonly CachedUriData data;
         private string pageTitle;
-        private List<Reference> pageReferences = new List<Reference>();
+        private List<Reference> outgoingReferences = new List<Reference>();
+        private List<Reference> incomingReferences = new List<Reference>();
 
         /// <summary>
         /// Create a page from the related cached data entry
@@ -40,7 +47,7 @@ namespace SiteMapUriExtractor {
         /// Load the page and extract URIs and other relevant data
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
-        public void Parse(UriCache cache) {
+        public void Parse(UriCache cache, ReadOnlyDictionary<Uri, Page> allPages) {
             var fileName = data.CachedFile.FullName;
             Console.WriteLine($"Parsing: {data.CachedFile.FullName}");
             if (fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase)) {
@@ -59,11 +66,17 @@ namespace SiteMapUriExtractor {
                     } else {
                         targetUri = new Uri(data.Uri, target);
                     }
-                    var text = reference.InnerHtml.Trim();
+                    var text = reference.InnerText.Trim();
                     var state = cache.GetState(targetUri);
-                    pageReferences.Add(new Reference(text, state));
-
-
+                    Console.WriteLine($"{data.Uri.AbsoluteUri} -- {text} -> {targetUri.AbsoluteUri}");
+                    if (allPages.TryGetValue(targetUri, out var targetPage)) {
+                        targetPage.References++;
+                    }
+                    var referenceData = new Reference(this, text, state, targetPage);
+                    outgoingReferences.Add(new Reference(this, text, state, targetPage));
+                    if (targetPage is not null) {
+                        targetPage.incomingReferences.Add(referenceData);
+                    }
                 }
             }
         }
@@ -72,5 +85,10 @@ namespace SiteMapUriExtractor {
         /// The Uri of this Page
         /// </summary>
         public Uri Uri => data.Uri;
+
+        /// <summary>
+        /// Indication of number of incoming references
+        /// </summary>
+        public int References { get; private set; }
     }
 }
