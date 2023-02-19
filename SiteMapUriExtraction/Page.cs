@@ -34,9 +34,10 @@ namespace SiteMapUriExtractor {
             var fileName = data.CachedFile.FullName;
             if (fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase)) {
                 var doc = new HtmlDocument();
-                doc.LoadHtml(fileName);
+                doc.DetectEncodingAndLoad(fileName);
                 var root = doc.DocumentNode;
                 var title = root.SelectSingleNode("//head//title");
+                var references = root.SelectNodes("////a");
                 GC.KeepAlive(title);
             }
         }

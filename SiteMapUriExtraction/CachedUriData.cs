@@ -36,20 +36,56 @@ namespace SiteMapUriExtractor {
         /// </summary>
         public FileInfo CachedFile => cachedFile.Exists ? cachedFile.File : throw new FileNotFoundException(uri.ToString());
 
+
+        /// <summary>
+        /// Check whether the item is changed on the server compared to the given cache retention period
+        /// </summary>
+        public bool IsModifiedOnServer(HttpClient client, TimeSpan retention) {
+            var lastModified = LastWriteTime;
+            var request = new HttpRequestMessage(HttpMethod.Head, uri);
+            request.Headers.Add("If-Modified-Since", lastModified.ToUniversalTime().ToString("R"));
+
+            var getHeadTask = client.SendAsync(new HttpRequestMessage(HttpMethod.Head, uri));
+            getHeadTask.Wait();
+            getHeadTask.ThrowIfRequestFailed("HEAD", uri);
+            var headerResponse = getHeadTask.Result;
+            foreach (var header in headerResponse.Headers) {
+                var key = header.Key;
+                var value = String.Join("/", header.Value);
+                Console.WriteLine($"Header: {key} = {value}");
+            }
+            foreach (var header in headerResponse.TrailingHeaders) {
+                var key = header.Key;
+                var value = String.Join("/", header.Value);
+                Console.WriteLine($"TrailingHeader: {key} = {value}");
+            }
+            foreach (var header in headerResponse.Content.Headers) {
+                var key = header.Key;
+                var value = String.Join("/", header.Value);
+                Console.WriteLine($"ContentHeader: {key} = {value}");
+            }
+            return headerResponse.IsSuccessStatusCode;
+        }
+
         /// <summary>
         /// Retrieve data from server and put in cache
         /// </summary>
         public void GetFromServer(HttpClient client) {
-            var getContentTask = client.GetAsync(uri);
+
+
+            var getContentTask = client.SendAsync(new HttpRequestMessage(HttpMethod.Get, uri));
 
             getContentTask.Wait();
-            OperationFailedException.ThrowIfFailed("GET", uri, getContentTask);
+            getContentTask.ThrowIfRequestFailed("GET", uri);
             var content = getContentTask.Result.Content;
             var contentType = content.Headers.ContentType;
             string extension;
             switch (contentType?.MediaType) {
                 case "text/xml":
                     extension = ".xml";
+                    break;
+                case "text/html":
+                    extension = ".html";
                     break;
                 default:
                     throw new NotImplementedException("Cannot cache content type " + contentType);

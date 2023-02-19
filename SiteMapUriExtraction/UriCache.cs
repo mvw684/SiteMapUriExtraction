@@ -8,8 +8,9 @@ namespace SiteMapUriExtractor {
     public class UriCache {
         private readonly DirectoryInfo cacheFolder;
         private readonly HttpClient client;
+        private readonly TimeSpan retention;
         private Dictionary<Uri, CachedUriData> cachedData = new Dictionary<Uri, CachedUriData> ();
-        TimeSpan retention;
+        private Dictionary<Uri, CachedUriState> cachedState = new Dictionary<Uri, CachedUriState> ();
 
         /// <summary>
         /// Create the cache with a <see cref="Directory">location</see> and a <see cref="RetentionPolicy"/>
@@ -44,22 +45,33 @@ namespace SiteMapUriExtractor {
 
             var cachedFileLocation = GetCachedFileLocation(uri);
             bool needsGet = false;
+            result = new CachedUriData(uri, cachedFileLocation);
 
             if (cachedFileLocation.Exists) {
-                var actualTime = cachedFileLocation.LastWriteTime.ToString("s");
-                var toCheck = (lastModified + retention).ToString("s");
+                var cachedTime = cachedFileLocation.LastWriteTime;
+                var expirationTime = cachedTime + retention;
 
-                if (lastModified + retention < cachedFileLocation.LastWriteTime) {
-                    needsGet = true;
+                var cachedAt = cachedTime.ToString("s");
+                var expiresAt = expirationTime.ToString("s");
+                var modifedAt = lastModified.ToString("s");
+                var okForReuse = expirationTime > lastModified;
+                
+                if (!okForReuse){
+                    needsGet = result.IsModifiedOnServer(client, retention);
+                    if (!needsGet) {
+                        result.CachedFile.LastWriteTime = DateTime.Now - retention;
+                        result.CachedFile.Refresh();
+                    }
                 }
             } else {
                 needsGet = true;
             }
 
-            result = new CachedUriData(uri, cachedFileLocation);
-
             if (needsGet) {
                 result.GetFromServer(client);
+                Console.WriteLine($"Cached: {uri.AbsoluteUri} -> {result.CachedFile.FullName}");
+            } else {
+                Console.WriteLine($"Reuse: {uri.AbsoluteUri} -> {result.CachedFile.FullName}");
             }
             cachedData[uri] = result;
             return result;

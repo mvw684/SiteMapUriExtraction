@@ -7,7 +7,7 @@ namespace SiteMapUriExtractor {
     /// </summary>
     public enum RetentionPolicy {
         /// <summary>
-        /// Null, undefined value
+        /// Always check server
         /// </summary>
         None = 0,
 

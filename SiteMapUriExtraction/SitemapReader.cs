@@ -29,8 +29,8 @@ namespace SiteMapUriExtractor {
         /// </summary>
         public void Load(List<string> sitemaps) {
             foreach(var sitemapUri in sitemaps) {
-                // assume changed, so fetch from server
-                Load(new Uri(sitemapUri), DateTime.Now);
+                // assume changed long ago
+                Load(new Uri(sitemapUri), DateTimeOffset.MinValue);
             }
         }
 
