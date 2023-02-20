@@ -146,5 +146,10 @@ namespace SiteMapUriExtractor {
         /// Incoming references from other Pages
         /// </summary>
         internal List<Reference> IncomingReferences => incomingReferences;
+
+        /// <summary>
+        /// The page title
+        /// </summary>
+        public string PageTitle => pageTitle;
     }
 }

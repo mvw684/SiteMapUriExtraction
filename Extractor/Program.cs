@@ -75,6 +75,7 @@ namespace SiteMapUriExtractor {
             var cache = new UriCache(outputFolder.CreateSubdirectory("Cache"), retention);
             var sitemapReader = new SitemapReader(cache);
             sitemapReader.Load(sitemaps);
+
             var pages = sitemapReader.Pages;
 
             var pagesOrdered = pages.Values.ToList();
@@ -82,6 +83,8 @@ namespace SiteMapUriExtractor {
             foreach (var page in pagesOrdered) {
                 page.Parse(cache, pages);
             }
+            var reporter = new SiteReporter(pagesOrdered, sitemapReader.Root);
+            reporter.Report(outputFolder);
         }
     }
 }
