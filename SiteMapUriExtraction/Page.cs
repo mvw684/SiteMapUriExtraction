@@ -88,6 +88,8 @@ namespace SiteMapUriExtractor {
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
         public void Parse(UriCache cache, ReadOnlyDictionary<Uri, Page> allPages) {
+            HashSet<string> existingLinks = new HashSet<string>(StringComparer.Ordinal);
+
             var fileName = data.CachedFile.FullName;
             Console.WriteLine($"Parsing: {data.CachedFile.FullName}");
             if (fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase)) {
@@ -117,6 +119,12 @@ namespace SiteMapUriExtractor {
                     }
 
                     var text = reference.InnerText.Trim();
+
+                    var key = text + "@" + targetUri.AbsoluteUri;
+                    if (existingLinks.Contains(key)) {
+                        continue;
+                    }
+                    existingLinks.Add(key);
                     bool pageExists = cache.GetState(targetUri).PageExists;
                     
                     if (allPages.TryGetValue(targetUri, out var targetPage)) {

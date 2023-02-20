@@ -126,7 +126,10 @@ namespace SiteMapUriExtractor {
         public void Report(DirectoryInfo outputFolder) {
             var fileName = root.Host + "." + root.LocalPath.Replace("/", ".").Replace("..", ".").Trim('.') + ".xlsx";
             var filePath = Path.Combine(outputFolder.FullName, fileName);
-            using var writer = new ExcelWriter(filePath);
+            if (File.Exists(filePath)) {
+                File.Delete(filePath);
+            }
+            using var writer = new ExcelWriter(filePath, "Links");
             WriteHeader(writer);
             foreach (Page page in pages) {
                 if (page.References == 0) {
