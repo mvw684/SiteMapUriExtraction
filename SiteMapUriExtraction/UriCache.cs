@@ -95,11 +95,15 @@ namespace SiteMapUriExtractor {
                     case "mailto":
                         state = new CachedUriState(uri, true);
                         break;
+                    case "file":
+                        state = new CachedUriState(uri, false);
+                        break;
                     case "http":
                     case "https":
                         state = new CachedUriState(uri);
                         state.CheckOnServer();
                         break;
+
                     default:
                         state = new CachedUriState(uri);
                         state.CheckOnServer();

@@ -104,9 +104,9 @@ namespace SiteMapUriExtractor {
                     }
                     Uri targetUri;
                     Uri? tempUri;
-                    if (Uri.TryCreate(target, UriKind.Absolute, out tempUri) ||
-                        Uri.TryCreate(data.Uri, target, out tempUri)
-                    ) {
+                    if (Uri.TryCreate(target, UriKind.Absolute, out tempUri)) {
+                        targetUri = tempUri;
+                    } else if (Uri.TryCreate(data.Uri, target, out tempUri)) {
                         targetUri = tempUri;
                     } else {
                         if (target.StartsWith("http", StringComparison.OrdinalIgnoreCase)) {
