@@ -17,17 +17,19 @@ namespace SiteMapUriExtractor {
         public class Reference {
             private readonly Page sourcePage;
             private readonly string name;
-            private readonly CachedUriState state;
+            private readonly Uri target;
+            private readonly bool exists;
             private readonly Page? targetPage;
 
             /// <summary>
             /// Constructor
             /// </summary>
-            public Reference(Page sourcePage, string name, CachedUriState state, Page? targePage) {
+            public Reference(Page sourcePage, string name, Uri target, bool exists, Page? targetPage) {
                 this.sourcePage = sourcePage;
                 this.name = name;
-                this.state = state;
-                this.targetPage = targePage;
+                this.target = target;
+                this.exists = exists;
+                this.targetPage = targetPage;
             }
 
             /// <summary>
@@ -36,9 +38,35 @@ namespace SiteMapUriExtractor {
             public string Name => name;
 
             /// <summary>
-            /// State of the target (existence etc.)
+            /// Source page Uri
             /// </summary>
-            public CachedUriState State => state;
+            public Uri Source => sourcePage.Uri;
+
+            /// <summary>
+            /// Source page title
+            /// </summary>
+            public string SourceTitle => sourcePage.pageTitle;
+
+            /// <summary>
+            /// Target Uri
+            /// </summary>
+            public Uri Target => target;
+
+            /// <summary>
+            /// Target Uri is accessible/exists
+            /// </summary>
+            public bool Exists => exists;
+
+
+            /// <summary>
+            /// Is a reference to one of the pages in the site maps
+            /// </summary>
+            public bool HasTargetPage => targetPage != null;
+
+            /// <summary>
+            /// Title (if a valid page)
+            /// </summary>
+            public string TargetTitle => targetPage is not null ? targetPage.pageTitle : name;
         }
 
         private readonly CachedUriData data;
@@ -79,17 +107,17 @@ namespace SiteMapUriExtractor {
                         targetUri = new Uri(data.Uri, target);
                     }
                     var text = reference.InnerText.Trim();
-                    var state = cache.GetState(targetUri);
+                    bool pageExists = cache.GetState(targetUri).PageExists;
                     
                     if (allPages.TryGetValue(targetUri, out var targetPage)) {
                         targetPage.References++;
                     }
-                    var referenceData = new Reference(this, text, state, targetPage);
+                    var referenceData = new Reference(this, text, targetUri, pageExists, targetPage);
                     outgoingReferences.Add(referenceData);
                     if (targetPage is not null) {
                         targetPage.incomingReferences.Add(referenceData);
                     }
-                    if (referenceData.State.PageExists) {
+                    if (pageExists) {
                         Console.WriteLine($"{data.Uri.AbsoluteUri} -- {text} -> {targetUri.AbsoluteUri}");
                     } else {
                         Console.WriteLine($"{data.Uri.AbsoluteUri} -- {text} BROKEN!!!-> {targetUri.AbsoluteUri}");

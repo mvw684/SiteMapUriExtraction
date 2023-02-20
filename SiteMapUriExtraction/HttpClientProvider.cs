@@ -7,6 +7,8 @@ namespace SiteMapUriExtractor {
 
         internal static Dictionary<string, HttpClient> clients = new Dictionary<string, HttpClient>();
 
+        //private static CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromDays(4));
+
         /// <summary>
         /// Access/use the <see cref="HttpClient"/>
         /// </summary>
@@ -19,12 +21,18 @@ namespace SiteMapUriExtractor {
             }
         }
 
+        /// <summary>
+        /// Cancellation token to use
+        /// </summary>
+        public CancellationToken CancellationToken => CancellationToken.None;
+
         internal HttpClientProvider(Uri uri) {
             server = uri.Host;
             if (clients.TryGetValue(server, out client)) {
                 clients.Remove(server);
             } else {
-                client = new HttpClient();
+                var handler = new HttpClientHandler();
+                client = new HttpClient(handler, true);
             }
         }
 

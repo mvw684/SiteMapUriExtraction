@@ -11,8 +11,6 @@ namespace SiteMapUriExtractor {
         private readonly Uri uri;
         private readonly CachedFileData cachedFile;
 
-        private static CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-
         /// <summary>
         /// Create an instance of cached data with a well known location and URI
         /// </summary>
@@ -51,16 +49,16 @@ namespace SiteMapUriExtractor {
             getHeadTask.Wait();
             getHeadTask.ThrowIfRequestFailed("HEAD", uri);
             var headerResponse = getHeadTask.Result;
-            foreach (var header in headerResponse.Headers) {
-                var key = header.Key;
-                var value = String.Join("/", header.Value);
-                Console.WriteLine($"Header: {key} = {value}");
-            }
-            foreach (var header in headerResponse.TrailingHeaders) {
-                var key = header.Key;
-                var value = String.Join("/", header.Value);
-                Console.WriteLine($"TrailingHeader: {key} = {value}");
-            }
+            //foreach (var header in headerResponse.Headers) {
+            //    var key = header.Key;
+            //    var value = String.Join("/", header.Value);
+            //    Console.WriteLine($"Header: {key} = {value}");
+            //}
+            //foreach (var header in headerResponse.TrailingHeaders) {
+            //    var key = header.Key;
+            //    var value = String.Join("/", header.Value);
+            //    Console.WriteLine($"TrailingHeader: {key} = {value}");
+            //}
             foreach (var header in headerResponse.Content.Headers) {
                 var key = header.Key;
                 var value = String.Join("/", header.Value);
@@ -102,7 +100,7 @@ namespace SiteMapUriExtractor {
             }
             cachedFile.Extension = extension;
             using (var cachedData = cachedFile.File.OpenWrite()) {
-                content.CopyTo(cachedData, null, cancellationTokenSource.Token);
+                content.CopyTo(cachedData, null, clientProvider.CancellationToken);
             }
             content.Dispose();
             getContentTask.Dispose();

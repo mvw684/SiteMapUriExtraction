@@ -9,7 +9,7 @@ namespace SiteMapUriExtractor {
         private readonly DirectoryInfo cacheFolder;
         private readonly TimeSpan retention;
         private Dictionary<Uri, CachedUriData> cachedData = new Dictionary<Uri, CachedUriData> ();
-        private Dictionary<string, CachedUriState> cachedState = new Dictionary<string, CachedUriState> (StringComparer.Ordinal);
+        private Dictionary<Uri, CachedUriState> cachedState = new Dictionary<Uri, CachedUriState>();
 
         /// <summary>
         /// Create the cache with a <see cref="Directory">location</see> and a <see cref="RetentionPolicy"/>
@@ -52,12 +52,12 @@ namespace SiteMapUriExtractor {
                 var cachedAt = cachedTime.ToString("s");
                 var expiresAt = expirationTime.ToString("s");
                 var modifedAt = lastModified?.ToString("s");
-                var okForReuse = lastModified is not null ? expirationTime > lastModified : false;
+                var okForReuse = lastModified is not null ? expirationTime > lastModified : expirationTime > DateTime.Now;
                 
                 if (!okForReuse){
                     needsGet = result.IsModifiedOnServer(retention);
                     if (!needsGet) {
-                        result.CachedFile.LastWriteTime = DateTime.Now - retention;
+                        result.CachedFile.LastWriteTime = DateTime.Now;
                         result.CachedFile.Refresh();
                     }
                 }
@@ -80,7 +80,7 @@ namespace SiteMapUriExtractor {
         /// </summary>
         public CachedUriState GetState(Uri uri) {
 
-            if (cachedState.TryGetValue(uri.AbsoluteUri, out var state)) {
+            if (cachedState.TryGetValue(uri, out var state)) {
                 return state;
             }
 
@@ -94,7 +94,7 @@ namespace SiteMapUriExtractor {
                     state.CheckOnServer();
                 }
             }
-            cachedState.Add(uri.AbsoluteUri, state);
+            cachedState.Add(uri, state);
             return state;
         }
 
