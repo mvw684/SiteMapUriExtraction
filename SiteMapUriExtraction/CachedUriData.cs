@@ -40,7 +40,9 @@ namespace SiteMapUriExtractor {
         /// <summary>
         /// Check whether the item is changed on the server compared to the given cache retention period
         /// </summary>
-        public bool IsModifiedOnServer(HttpClient client, TimeSpan retention) {
+        public bool IsModifiedOnServer(TimeSpan retention) {
+            using var clientProvider = HttpClientProvider.Get(uri);
+            var client = clientProvider.Client;
             Console.WriteLine($"Check for modification: {uri.AbsoluteUri}");
             var lastModified = LastWriteTime;
             var request = new HttpRequestMessage(HttpMethod.Head, uri);
@@ -79,9 +81,9 @@ namespace SiteMapUriExtractor {
         /// <summary>
         /// Retrieve data from server and put in cache
         /// </summary>
-        public void GetFromServer(HttpClient client) {
-
-
+        public void GetFromServer() {
+            using var clientProvider = HttpClientProvider.Get(uri);
+            var client = clientProvider.Client;
             var getContentTask = client.GetAsync(uri);
             getContentTask.Wait();
             getContentTask.ThrowIfRequestFailed("GET", uri);

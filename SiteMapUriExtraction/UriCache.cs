@@ -7,7 +7,6 @@ namespace SiteMapUriExtractor {
     /// </summary>
     public class UriCache {
         private readonly DirectoryInfo cacheFolder;
-        private readonly HttpClient client;
         private readonly TimeSpan retention;
         private Dictionary<Uri, CachedUriData> cachedData = new Dictionary<Uri, CachedUriData> ();
         private Dictionary<string, CachedUriState> cachedState = new Dictionary<string, CachedUriState> (StringComparer.Ordinal);
@@ -32,7 +31,6 @@ namespace SiteMapUriExtractor {
                     break;
 
             }
-            client = new HttpClient();
         }
 
         /// <summary>
@@ -57,7 +55,7 @@ namespace SiteMapUriExtractor {
                 var okForReuse = lastModified is not null ? expirationTime > lastModified : false;
                 
                 if (!okForReuse){
-                    needsGet = result.IsModifiedOnServer(client, retention);
+                    needsGet = result.IsModifiedOnServer(retention);
                     if (!needsGet) {
                         result.CachedFile.LastWriteTime = DateTime.Now - retention;
                         result.CachedFile.Refresh();
@@ -68,7 +66,7 @@ namespace SiteMapUriExtractor {
             }
 
             if (needsGet) {
-                result.GetFromServer(client);
+                result.GetFromServer();
                 Console.WriteLine($"Cached: {uri.AbsoluteUri} -> {result.CachedFile.FullName}");
             } else {
                 Console.WriteLine($"Reuse: {uri.AbsoluteUri} -> {result.CachedFile.FullName}");
@@ -93,7 +91,7 @@ namespace SiteMapUriExtractor {
                     state = new CachedUriState(uri, true);
                 } else {
                     state = new CachedUriState(uri);
-                    state.CheckOnServer(client);
+                    state.CheckOnServer();
                 }
             }
             cachedState.Add(uri.AbsoluteUri, state);

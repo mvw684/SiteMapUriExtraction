@@ -37,7 +37,9 @@ namespace SiteMapUriExtractor {
         /// <summary>
         /// Retrieve data from server and put in cache
         /// </summary>
-        public void CheckOnServer(HttpClient client) {
+        public void CheckOnServer() {
+            using var clientProvider = HttpClientProvider.Get(uri);
+            var client = clientProvider.Client;
             Console.WriteLine($"Check existence: {uri.AbsoluteUri}");
             var request = new HttpRequestMessage(HttpMethod.Head, uri);
             var getHeadTask = client.SendAsync(request);
