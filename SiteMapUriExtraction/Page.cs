@@ -99,13 +99,23 @@ namespace SiteMapUriExtractor {
                 var references = root.Descendants("a").ToList();
                 foreach (var reference in references ) {
                     var target = reference.GetAttributeValue("href", null);
-                    Uri targetUri;
-
-                    if (target.StartsWith("http", StringComparison.OrdinalIgnoreCase)) {
-                        targetUri = new Uri(target);
-                    } else {
-                        targetUri = new Uri(data.Uri, target);
+                    if (target is null) {
+                        continue;
                     }
+                    Uri targetUri;
+                    Uri? tempUri;
+                    if (Uri.TryCreate(target, UriKind.Absolute, out tempUri) ||
+                        Uri.TryCreate(data.Uri, target, out tempUri)
+                    ) {
+                        targetUri = tempUri;
+                    } else {
+                        if (target.StartsWith("http", StringComparison.OrdinalIgnoreCase)) {
+                            targetUri = new Uri(target);
+                        } else {
+                            targetUri = new Uri(data.Uri, target);
+                        }
+                    }
+
                     var text = reference.InnerText.Trim();
                     bool pageExists = cache.GetState(targetUri).PageExists;
                     

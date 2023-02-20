@@ -1,5 +1,7 @@
 ﻿// Copyright Mark J. van Wijk 2023
 
+using System.Diagnostics;
+
 namespace SiteMapUriExtractor {
 
     /// <summary>
@@ -87,11 +89,21 @@ namespace SiteMapUriExtractor {
             if (cachedData.TryGetValue(uri, out var data)) {
                 state = new CachedUriState(uri, true);
             } else {
-                if ("mailto".Equals(uri.Scheme, StringComparison.OrdinalIgnoreCase)) {
-                    state = new CachedUriState(uri, true);
-                } else {
-                    state = new CachedUriState(uri);
-                    state.CheckOnServer();
+                var scheme = uri.Scheme;
+                switch(scheme) {
+                    case "tel":
+                    case "mailto":
+                        state = new CachedUriState(uri, true);
+                        break;
+                    case "http":
+                    case "https":
+                        state = new CachedUriState(uri);
+                        state.CheckOnServer();
+                        break;
+                    default:
+                        state = new CachedUriState(uri);
+                        state.CheckOnServer();
+                        break;
                 }
             }
             cachedState.Add(uri, state);
