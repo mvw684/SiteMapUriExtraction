@@ -83,6 +83,8 @@ namespace SiteMapUriExtractor {
             foreach (var page in pagesOrdered) {
                 page.Parse(cache, pages);
             }
+            // TODO: the provider should become an injectable factory
+            HttpClientProvider.DisposeAllClients();
             var reporter = new SiteReporter(pagesOrdered, sitemapReader.Root);
             reporter.Report(outputFolder);
         }

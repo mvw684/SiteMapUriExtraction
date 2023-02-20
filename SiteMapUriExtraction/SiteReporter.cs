@@ -11,7 +11,10 @@ namespace SiteMapUriExtractor {
     /// </summary>
     public class SiteReporter {
 
-        private class RowData {
+        /// <summary>
+        /// Public record for writing excel data
+        /// </summary>
+        public class RowData {
 
             internal RowData() {
                 SourceTitle = string.Empty;
@@ -28,16 +31,17 @@ namespace SiteMapUriExtractor {
                 TargetTitle = notReferencedPage.PageTitle;
                 TargetUri = notReferencedPage.Uri.AbsoluteUri;
                 Comment = "Not linked from other pages";
-                SetRelative(out TargetRelativeUri, root, notReferencedPage.Uri);
+
+                TargetRelativeUri = GetRelative(root, notReferencedPage.Uri);
             }
 
             internal RowData(Uri root, Page.Reference reference) {
                 SourceTitle = reference.SourceTitle;
-                SetRelative(out SourceRelativeUri, root, reference.Source);
+                SourceRelativeUri = GetRelative(root, reference.Source);
                 SourceUri = reference.Source.AbsoluteUri;
                 LinkTitle = reference.Name;
                 TargetTitle = reference.TargetTitle;
-                SetRelative(out TargetRelativeUri, root, reference.Target);
+                TargetRelativeUri = GetRelative(root, reference.Target);
                 TargetUri = reference.Target.AbsoluteUri;
                 List<string> commentParts = new();
                 if (!reference.Exists) {
@@ -50,24 +54,57 @@ namespace SiteMapUriExtractor {
 
             }
 
-            private void SetRelative(out string relativeUri, Uri root, Uri uri) {
+            private string GetRelative(Uri root, Uri uri) {
+                string relativeUri;
                 var fullRoot = root.AbsoluteUri;
                 var fullTarget = uri.AbsoluteUri;
                 if (fullTarget.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase)) {
                     relativeUri = fullTarget.Substring(fullRoot.Length);
                 } else {
-                    relativeUri = "<Extrernal>";
+                    relativeUri = "<External>";
                 }
+                return relativeUri;
             }
 
-            internal readonly string SourceTitle;
-            internal readonly string SourceRelativeUri;
-            internal readonly string SourceUri;
-            internal readonly string LinkTitle;
-            internal readonly string TargetRelativeUri;
-            internal readonly string TargetUri;
-            internal readonly string TargetTitle;
-            internal readonly string Comment;
+            /// <summary>
+            /// See property name
+            /// </summary>
+            public string SourceTitle { get; init; }
+
+            /// <summary>
+            /// See property name
+            /// </summary>
+            public string SourceRelativeUri { get; init; }
+
+            /// <summary>
+            /// See property name
+            /// </summary>
+            public string SourceUri { get; init; }
+
+            /// <summary>
+            /// See property name
+            /// </summary>
+            public string LinkTitle { get; init; }
+
+            /// <summary>
+            /// See property name
+            /// </summary>
+            public string Comment { get; init; }
+
+            /// <summary>
+            /// See property name
+            /// </summary>
+            public string TargetTitle { get; init; }
+
+            /// <summary>
+            /// See property name
+            /// </summary>
+            public string TargetRelativeUri { get; init; }
+
+            /// <summary>
+            /// See property name
+            /// </summary>
+            public string TargetUri { get; init; }
         }
 
         private readonly List<Page> pages = new ();
@@ -87,9 +124,9 @@ namespace SiteMapUriExtractor {
         /// <param name="outputFolder"></param>
         /// <exception cref="NotImplementedException"></exception>
         public void Report(DirectoryInfo outputFolder) {
-            var fileName = root.Host + ".xls";
+            var fileName = root.Host + "." + root.LocalPath.Replace("/", ".").Replace("..", ".").Trim('.') + ".xlsx";
             var filePath = Path.Combine(outputFolder.FullName, fileName);
-            var writer = new ExcelWriter(filePath);
+            using var writer = new ExcelWriter(filePath);
             WriteHeader(writer);
             foreach (Page page in pages) {
                 if (page.References == 0) {
@@ -99,20 +136,24 @@ namespace SiteMapUriExtractor {
                     WriteReference(writer, reference);
                 }
             }
+            
         }
 
         private void WriteHeader(ExcelWriter writer) {
             writer.WriteHeader<RowData>();
+            writer.NextRecord();
         }
 
         private void WriteNotReferecedPage(ExcelWriter writer, Page page) {
             var data = new RowData(root, page);
             writer.WriteRecord(data);
+            writer.NextRecord();
         }
 
         private void WriteReference(ExcelWriter writer, Page.Reference reference) {
             var data = new RowData(root, reference);
             writer.WriteRecord(data);
+            writer.NextRecord();
         }
     }
 }
