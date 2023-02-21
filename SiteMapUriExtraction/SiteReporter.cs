@@ -2,117 +2,20 @@
 
 using CsvHelper.Excel;
 
-using DocumentFormat.OpenXml.Spreadsheet;
-
 namespace SiteMapUriExtractor {
 
     /// <summary>
     /// Report the identified pages and references
     /// </summary>
-    public class SiteReporter {
-
-        /// <summary>
-        /// Public record for writing excel data
-        /// </summary>
-        public class RowData {
-
-            internal RowData() {
-                SourceTitle = string.Empty;
-                SourceRelativeUri = string.Empty;
-                SourceUri = string.Empty;
-                LinkTitle = string.Empty;
-                TargetTitle = string.Empty;
-                TargetRelativeUri = string.Empty;
-                TargetUri = string.Empty;
-                Comment = string.Empty;
-            }
-
-            internal RowData(Uri root, Page notReferencedPage) : this() {
-                TargetTitle = notReferencedPage.PageTitle;
-                TargetUri = notReferencedPage.Uri.AbsoluteUri;
-                Comment = "Not linked from other pages";
-
-                TargetRelativeUri = GetRelative(root, notReferencedPage.Uri);
-            }
-
-            internal RowData(Uri root, Page.Reference reference) {
-                SourceTitle = reference.SourceTitle;
-                SourceRelativeUri = GetRelative(root, reference.Source);
-                SourceUri = reference.Source.AbsoluteUri;
-                LinkTitle = reference.Name;
-                TargetTitle = reference.TargetTitle;
-                TargetRelativeUri = GetRelative(root, reference.Target);
-                TargetUri = reference.Target.AbsoluteUri;
-                List<string> commentParts = new();
-                if (!reference.Exists) {
-                    commentParts.Add("Link does not exist");
-                }
-                if (!reference.HasTargetPage) {
-                    commentParts.Add("To External");
-                }
-                Comment = string.Join(" / ", commentParts);
-
-            }
-
-            private string GetRelative(Uri root, Uri uri) {
-                string relativeUri;
-                var fullRoot = root.AbsoluteUri;
-                var fullTarget = uri.AbsoluteUri;
-                if (fullTarget.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase)) {
-                    relativeUri = fullTarget.Substring(fullRoot.Length);
-                } else {
-                    relativeUri = "<External>";
-                }
-                return relativeUri;
-            }
-
-            /// <summary>
-            /// See property name
-            /// </summary>
-            public string SourceTitle { get; init; }
-
-            /// <summary>
-            /// See property name
-            /// </summary>
-            public string SourceRelativeUri { get; init; }
-
-            /// <summary>
-            /// See property name
-            /// </summary>
-            public string SourceUri { get; init; }
-
-            /// <summary>
-            /// See property name
-            /// </summary>
-            public string LinkTitle { get; init; }
-
-            /// <summary>
-            /// See property name
-            /// </summary>
-            public string Comment { get; init; }
-
-            /// <summary>
-            /// See property name
-            /// </summary>
-            public string TargetTitle { get; init; }
-
-            /// <summary>
-            /// See property name
-            /// </summary>
-            public string TargetRelativeUri { get; init; }
-
-            /// <summary>
-            /// See property name
-            /// </summary>
-            public string TargetUri { get; init; }
-        }
+    public partial class SiteReporter {
 
         private readonly List<Page> pages = new ();
         private readonly Uri root;
 
-        /// <summary>
-        /// Construct with the parsed pages to report on and the root Uri of the site.
-        /// </summary>
+
+            /// <summary>
+            /// Construct with the parsed pages to report on and the root Uri of the site.
+            /// </summary>
         public SiteReporter(List<Page> pages, Uri root) {
             this.pages = pages;
             this.root = root;
@@ -124,22 +27,46 @@ namespace SiteMapUriExtractor {
         /// <param name="outputFolder"></param>
         /// <exception cref="NotImplementedException"></exception>
         public void Report(DirectoryInfo outputFolder) {
-            var fileName = root.Host + "." + root.LocalPath.Replace("/", ".").Replace("..", ".").Trim('.') + ".xlsx";
-            var filePath = Path.Combine(outputFolder.FullName, fileName);
-            if (File.Exists(filePath)) {
-                File.Delete(filePath);
+
+            var rootFileName = root.Host + "." + root.LocalPath.Replace("/", ".").Replace("..", ".").Trim('.');
+            var linksFileName = rootFileName + ".links.xlsx";
+            var pagesFileName = rootFileName + ".pages.xlsx";
+            var linksFilePath = Path.Combine(outputFolder.FullName, linksFileName);
+            var pagesFilePath = Path.Combine(outputFolder.FullName, pagesFileName);
+
+            ReportLinks(linksFilePath);
+            ReportPages(pagesFilePath);
+        }
+
+        private void ReportPages(string pagesFilePath) {
+            if (File.Exists(pagesFilePath)) {
+                File.Delete(pagesFilePath);
             }
-            using var writer = new ExcelWriter(filePath, "Links");
+            using var writer = new ExcelWriter(pagesFilePath, "Pages");
+            List<PageData> pageDatas = new List<PageData>();
+            foreach(Page page in pages) {
+                pageDatas.Add(new PageData(page));
+            }
+            PageData.WriteHeader(writer);
+            foreach(var pageData in pageDatas) {
+                pageData.WriteRecord(writer);
+            }
+        }
+
+        private void ReportLinks(string linksFilePath) {
+            if (File.Exists(linksFilePath)) {
+                File.Delete(linksFilePath);
+            }
+            using var writer = new ExcelWriter(linksFilePath, "Links");
             WriteHeader(writer);
             foreach (Page page in pages) {
                 if (page.References == 0) {
                     WriteNotReferecedPage(writer, page);
                 }
-                foreach(var reference in page.OutgoingReferences) {
+                foreach (var reference in page.OutgoingReferences) {
                     WriteReference(writer, reference);
                 }
             }
-            
         }
 
         private void WriteHeader(ExcelWriter writer) {
