@@ -1,6 +1,7 @@
 ﻿// Copyright Mark J. van Wijk 2023
 
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 using HtmlAgilityPack;
 
@@ -119,6 +120,11 @@ namespace SiteMapUriExtractor {
                     }
 
                     var text = reference.InnerText.Trim();
+                    if (string.IsNullOrEmpty(text)) {
+                        if (Debugger.IsAttached) {
+                            Debugger.Break();
+                        }
+                    }
 
                     var key = text + "@" + targetUri.AbsoluteUri;
                     if (existingLinks.Contains(key)) {

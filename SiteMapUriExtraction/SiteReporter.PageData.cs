@@ -15,22 +15,16 @@ namespace SiteMapUriExtractor {
             private static int partsCount = 0;
 
             private string title;
-            private string filePart = string.Empty;
-            private ArraySegment<string> pathParts;
+            private string[] pathParts;
             private Uri uri;
             internal PageData(Page page) {
 
                 title = page.PageTitle;
                 uri = page.Uri;
                 var path = uri.AbsolutePath;
-                var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-
-                if (path.Length > 0) {
-                    filePart = parts[parts.Length - 1];
-                    pathParts = new ArraySegment<string>(parts, 0, parts.Length - 1);
-                    if (pathParts.Count > partsCount) {
-                        partsCount = pathParts.Count;
-                    }
+                pathParts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                if (pathParts.Length > partsCount) {
+                    partsCount = pathParts.Length;
                 }
             }
 
@@ -39,7 +33,6 @@ namespace SiteMapUriExtractor {
                 for (int i = 0; i < partsCount; i++) {
                     writer.WriteField($"Part {i + 1}");
                 }
-                writer.WriteField("Page");
                 writer.WriteField("Title");
                 writer.WriteField("URI");
                 writer.NextRecord();
@@ -47,13 +40,12 @@ namespace SiteMapUriExtractor {
 
             internal void WriteRecord(ExcelWriter writer) {
                 int i = 0;
-                for(; i < pathParts.Count; i++) {
+                for(; i < pathParts.Length; i++) {
                     writer.WriteField(pathParts[i]);
                 }
                 for (; i < partsCount; i++) {
                     writer.WriteField("");
                 }
-                writer.WriteField(filePart);
                 writer.WriteField(title);
                 writer.WriteField(uri.AbsoluteUri);
                 writer.NextRecord();
