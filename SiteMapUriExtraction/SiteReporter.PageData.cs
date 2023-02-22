@@ -48,8 +48,8 @@ namespace SiteMapUriExtractor {
                 column = partsCount + 1;
                 var nextField = (char)('A' + (partsCount + 1));
                 var titleWithLink = $"=HYPERLINK({nextField}{rowNumber},\"{title}\")";
-                row.Cell(column++).SetFormulaA1(titleWithLink);
-                row.Cell(column++).SetValue(uri.AbsoluteUri);
+                row.Cell(column++).SetLink(uri, title);
+                row.Cell(column++).SetLink(uri);
             }
         }
     }

@@ -10,55 +10,32 @@ namespace SiteMapUriExtractor {
         /// </summary>
         public class RowData {
 
-            internal RowData() {
+            internal RowData(Uri root, Page notReferencedPage) {
                 SourceTitle = string.Empty;
                 SourceRelativeUri = string.Empty;
-                SourceUri = string.Empty;
+                SourceUri = new Uri("", UriKind.Relative);
                 LinkTitle = string.Empty;
-                TargetTitle = string.Empty;
-                TargetRelativeUri = string.Empty;
-                TargetUri = string.Empty;
-                Comment = string.Empty;
-            }
-
-            private static RowData MakeHeader() {
-                return new RowData() {
-                    SourceTitle = "Source Title",
-                    SourceRelativeUri = "Source Relative URI",
-                    SourceUri = "Source URI",
-                    LinkTitle = "Link Title",
-                    TargetTitle = "Target Title",
-                    TargetRelativeUri = "Target Relative URI",
-                    TargetUri = "Target URI",
-                    Comment = "Comment"
-                };
-            }
-
-            internal RowData(Uri root, Page notReferencedPage) : this() {
                 TargetTitle = notReferencedPage.PageTitle;
-                TargetUri = notReferencedPage.Uri.AbsoluteUri;
+                TargetUri = notReferencedPage.Uri;
                 Comment = "Not linked from other pages";
-
                 TargetRelativeUri = GetRelative(root, notReferencedPage.Uri);
             }
 
-            internal RowData(Uri root, Page.Reference reference) {
+            internal RowData(Uri root, Reference reference) {
                 SourceTitle = reference.SourceTitle;
                 SourceRelativeUri = GetRelative(root, reference.Source);
-                SourceUri = reference.Source.AbsoluteUri;
+                SourceUri = reference.Source;
                 LinkTitle = reference.Name;
                 TargetTitle = reference.TargetTitle;
                 TargetRelativeUri = GetRelative(root, reference.Target);
-                TargetUri = reference.Target.AbsoluteUri;
-                List<string> commentParts = new();
+                TargetUri = reference.Target;
                 if (!reference.Exists) {
-                    commentParts.Add("Link does not exist");
+                    Comment = "Link does not exist";
+                } else if (!reference.HasTargetPage) {
+                    Comment = "To External";
+                } else {
+                    Comment = string.Empty;
                 }
-                if (!reference.HasTargetPage) {
-                    commentParts.Add("To External");
-                }
-                Comment = string.Join(" / ", commentParts);
-
             }
 
             private string GetRelative(Uri root, Uri uri) {
@@ -66,7 +43,10 @@ namespace SiteMapUriExtractor {
                 var fullRoot = root.AbsoluteUri;
                 var fullTarget = uri.AbsoluteUri;
                 if (fullTarget.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase)) {
-                    relativeUri = fullTarget.Substring(fullRoot.Length);
+                    relativeUri = fullTarget.Substring(fullRoot.Length).Trim('/');
+                    if (string.IsNullOrEmpty(relativeUri)) {
+                        relativeUri = "/";
+                    }
                 } else {
                     relativeUri = "<External>";
                 }
@@ -74,21 +54,30 @@ namespace SiteMapUriExtractor {
             }
 
             internal static void WriteHeader(IXLWorksheet sheet) {
-                MakeHeader().WriteRecord(sheet, 1);
+                var row = sheet.Row(1);
+                int column = 1;
+                row.Cell(column++).SetValue("Source Title");
+                row.Cell(column++).SetValue("Source Relative URI");
+                row.Cell(column++).SetValue("Source Uri");
+                row.Cell(column++).SetValue("Link Title");
+                row.Cell(column++).SetValue("Comment");
+                row.Cell(column++).SetValue("Target Title");
+                row.Cell(column++).SetValue("Target Relative URI");
+                row.Cell(column++).SetValue("Target URI");
             }
 
             internal void WriteRecord(IXLWorksheet sheet, int rowNumber) {
                 var row = sheet.Row(rowNumber);
 
                 int column = 1;
-                row.Cell(column++).SetFormulaA1($"=HYPERLINK(\"{SourceUri}\",\"{SourceTitle}\")");
+                row.Cell(column++).SetLink(SourceUri, SourceTitle);
                 row.Cell(column++).SetValue(SourceRelativeUri);
-                row.Cell(column++).SetValue(SourceUri);
-                row.Cell(column++).SetFormulaA1($"=HYPERLINK(\"{SourceUri}\",\"{LinkTitle}\")");
+                row.Cell(column++).SetLink(SourceUri);
+                row.Cell(column++).SetLink(TargetUri, LinkTitle);
                 row.Cell(column++).SetValue(Comment);
-                row.Cell(column++).SetFormulaA1($"=HYPERLINK(\"{SourceUri}\",\"{TargetTitle}\")");
+                row.Cell(column++).SetLink(TargetUri, TargetTitle);
                 row.Cell(column++).SetValue(TargetRelativeUri);
-                row.Cell(column++).SetValue(TargetUri);
+                row.Cell(column++).SetLink(TargetUri);
             }
 
             /// <summary>See property name</summary>
@@ -98,7 +87,7 @@ namespace SiteMapUriExtractor {
             public string SourceRelativeUri { get; init; }
 
             /// <summary>See property name</summary>
-            public string SourceUri { get; init; }
+            public Uri SourceUri { get; init; }
 
             /// <summary>See property name</summary>
             public string LinkTitle { get; init; }
@@ -113,7 +102,7 @@ namespace SiteMapUriExtractor {
             public string TargetRelativeUri { get; init; }
 
             /// <summary>See property name</summary>
-            public string TargetUri { get; init; }
+            public Uri TargetUri { get; init; }
         }
     }
 }

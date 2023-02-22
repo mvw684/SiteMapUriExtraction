@@ -88,7 +88,7 @@ namespace SiteMapUriExtractor {
             data.WriteRecord(sheet, row);
         }
 
-        private void WriteReference(IXLWorksheet sheet, Page.Reference reference, int row) {
+        private void WriteReference(IXLWorksheet sheet, Reference reference, int row) {
             var data = new RowData(root, reference);
             data.WriteRecord(sheet, row);
         }
