@@ -47,15 +47,10 @@ namespace SiteMapUriExtractor {
             var linksSheet = workBook.Worksheets.Add("Links");
             ReportLinks(linksSheet);
             ReportPages(pagesSheet);
-            Format(linksSheet);
-            Format(pagesSheet);
+            RowData.Format(linksSheet);
+            PageData.Format(pagesSheet);
             workBook.SaveAs(filePath);
 
-        }
-
-        private void Format(IXLWorksheet sheet) {
-            sheet.Row(1).SetAutoFilter(true);
-            sheet.SheetView.FreezeRows(1);
         }
 
         private void ReportPages(IXLWorksheet sheet) {

@@ -2,6 +2,9 @@
 
 using ClosedXML.Excel;
 
+using DocumentFormat.OpenXml.Office2016.Excel;
+using DocumentFormat.OpenXml.Spreadsheet;
+
 namespace SiteMapUriExtractor {
 
     public partial class SiteReporter {
@@ -26,6 +29,7 @@ namespace SiteMapUriExtractor {
                 }
             }
 
+            
             internal static void WriteHeader(IXLWorksheet sheet) {
                 var row = sheet.Row(1);
                 int column = 1;
@@ -50,6 +54,12 @@ namespace SiteMapUriExtractor {
                 var titleWithLink = $"=HYPERLINK({nextField}{rowNumber},\"{title}\")";
                 row.Cell(column++).SetLink(uri, title);
                 row.Cell(column++).SetLink(uri);
+            }
+
+            internal static void Format(IXLWorksheet sheet) {
+                sheet.Row(1).SetAutoFilter(true);
+                sheet.SheetView.FreezeRows(1);
+                sheet.Columns().AdjustToContents(1, partsCount + 1, 9d, 60d);
             }
         }
     }

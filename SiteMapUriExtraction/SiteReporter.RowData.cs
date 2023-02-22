@@ -80,6 +80,39 @@ namespace SiteMapUriExtractor {
                 row.Cell(column++).SetLink(TargetUri);
             }
 
+            internal static void Format(IXLWorksheet sheet) {
+                sheet.Row(1).SetAutoFilter(true);
+                sheet.SheetView.FreezeRows(1);
+
+                // source title
+                sheet.Column(1).AdjustToContents(10d, 50d);
+
+                // source relative uri
+                sheet.Column(2).Width = 50;
+                sheet.Column(2).Style.Alignment.SetShrinkToFit(true);
+
+                // uri 
+                sheet.Column(3).Width = 12;
+
+                // link title
+                sheet.Column(4).Width = 40;
+                sheet.Column(4).Style.Alignment.SetShrinkToFit(true);
+
+                // comment
+                sheet.Column(5).Width = 13;
+                sheet.Column(5).Style.Alignment.SetShrinkToFit(true);
+
+                // target title
+                sheet.Column(6).AdjustToContents(10d, 50d);
+
+                // target relative uri
+                sheet.Column(7).Width = 50;
+                sheet.Column(7).Style.Alignment.SetShrinkToFit(true);
+
+                // target uri
+                sheet.Column(8).Width = 12;
+            }
+
             /// <summary>See property name</summary>
             public string SourceTitle { get; init; }
 
