@@ -1,6 +1,6 @@
 ﻿// Copyright Mark J. van Wijk 2023
 
-using CsvHelper.Excel;
+using ClosedXML.Excel;
 
 namespace SiteMapUriExtractor {
 
@@ -27,63 +27,70 @@ namespace SiteMapUriExtractor {
         /// <param name="outputFolder"></param>
         /// <exception cref="NotImplementedException"></exception>
         public void Report(DirectoryInfo outputFolder) {
-
             var rootFileName = root.Host + "." + root.LocalPath.Replace("/", ".").Replace("..", ".").Trim('.');
-            var linksFileName = rootFileName + ".links.xlsx";
-            var pagesFileName = rootFileName + ".pages.xlsx";
-            var linksFilePath = Path.Combine(outputFolder.FullName, linksFileName);
-            var pagesFilePath = Path.Combine(outputFolder.FullName, pagesFileName);
+            var backup = rootFileName + ".bak.xlsx";
+            var fileName = rootFileName + ".xlsx";
 
-            ReportLinks(linksFilePath);
-            ReportPages(pagesFilePath);
+            var backupPath = Path.Combine(outputFolder.FullName, backup);
+            var filePath = Path.Combine(outputFolder.FullName, fileName);
+
+            if (File.Exists(backupPath)) {
+                File.Delete(backupPath);
+            }
+            if (File.Exists(filePath)) {
+                File.Move(filePath, backupPath);
+            }
+
+            using var workBook = new XLWorkbook();
+
+            var pagesSheet = workBook.Worksheets.Add("Pages");
+            var linksSheet = workBook.Worksheets.Add("Links");
+            ReportLinks(linksSheet);
+            ReportPages(pagesSheet);
+            Format(linksSheet);
+            Format(pagesSheet);
+            workBook.SaveAs(filePath);
+
         }
 
-        private void ReportPages(string pagesFilePath) {
-            if (File.Exists(pagesFilePath)) {
-                File.Delete(pagesFilePath);
-            }
-            using var writer = new ExcelWriter(pagesFilePath, "Pages");
+        private void Format(IXLWorksheet sheet) {
+            sheet.Row(1).SetAutoFilter(true);
+            sheet.SheetView.FreezeRows(1);
+        }
+
+        private void ReportPages(IXLWorksheet sheet) {
             List<PageData> pageDatas = new List<PageData>();
             foreach(Page page in pages) {
                 pageDatas.Add(new PageData(page));
             }
-            PageData.WriteHeader(writer);
+            PageData.WriteHeader(sheet);
+            int row = 2;
             foreach(var pageData in pageDatas) {
-                pageData.WriteRecord(writer);
+                pageData.WriteRecord(sheet, row++);
             }
         }
 
-        private void ReportLinks(string linksFilePath) {
-            if (File.Exists(linksFilePath)) {
-                File.Delete(linksFilePath);
-            }
-            using var writer = new ExcelWriter(linksFilePath, "Links");
-            WriteHeader(writer);
+        private void ReportLinks(IXLWorksheet sheet) {
+            RowData.WriteHeader(sheet);
+            int row = 2;
             foreach (Page page in pages) {
                 if (page.References == 0) {
-                    WriteNotReferecedPage(writer, page);
+                    WriteNotReferecedPage(sheet, page, row++);
                 }
                 foreach (var reference in page.OutgoingReferences) {
-                    WriteReference(writer, reference);
+                    WriteReference(sheet, reference, row++);
                 }
             }
         }
 
-        private void WriteHeader(ExcelWriter writer) {
-            writer.WriteHeader<RowData>();
-            writer.NextRecord();
-        }
-
-        private void WriteNotReferecedPage(ExcelWriter writer, Page page) {
+        private void WriteNotReferecedPage(IXLWorksheet sheet, Page page, int row) {
             var data = new RowData(root, page);
-            writer.WriteRecord(data);
-            writer.NextRecord();
+            data.WriteRecord(sheet, row);
         }
 
-        private void WriteReference(ExcelWriter writer, Page.Reference reference) {
+        private void WriteReference(IXLWorksheet sheet, Page.Reference reference, int row) {
             var data = new RowData(root, reference);
-            writer.WriteRecord(data);
-            writer.NextRecord();
+            data.WriteRecord(sheet, row);
         }
     }
 }

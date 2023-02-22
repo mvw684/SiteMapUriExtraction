@@ -1,8 +1,6 @@
 ﻿// Copyright Mark J. van Wijk 2023
 
-using CsvHelper.Excel;
-
-using DocumentFormat.OpenXml.Spreadsheet;
+using ClosedXML.Excel;
 
 namespace SiteMapUriExtractor {
 
@@ -28,27 +26,30 @@ namespace SiteMapUriExtractor {
                 }
             }
 
-            internal static void WriteHeader(ExcelWriter writer) {
-
+            internal static void WriteHeader(IXLWorksheet sheet) {
+                var row = sheet.Row(1);
+                int column = 1;
                 for (int i = 0; i < partsCount; i++) {
-                    writer.WriteField($"Part {i + 1}");
+                    row.Cell(column++).SetValue($"Part {i + 1}");
                 }
-                writer.WriteField("Title");
-                writer.WriteField("URI");
-                writer.NextRecord();
+                row.Cell(column++).SetValue("Title");
+                row.Cell(column++).SetValue("URI");
+
             }
 
-            internal void WriteRecord(ExcelWriter writer) {
+            internal void WriteRecord(IXLWorksheet sheet, int rowNumber) {
+                var row = sheet.Row(rowNumber);
+
                 int i = 0;
+                int column = 1;
                 for(; i < pathParts.Length; i++) {
-                    writer.WriteField(pathParts[i]);
+                    row.Cell(column++).SetValue(pathParts[i]);
                 }
-                for (; i < partsCount; i++) {
-                    writer.WriteField("");
-                }
-                writer.WriteField(title);
-                writer.WriteField(uri.AbsoluteUri);
-                writer.NextRecord();
+                column = partsCount + 1;
+                var nextField = (char)('A' + (partsCount + 1));
+                var titleWithLink = $"=HYPERLINK({nextField}{rowNumber},\"{title}\")";
+                row.Cell(column++).SetFormulaA1(titleWithLink);
+                row.Cell(column++).SetValue(uri.AbsoluteUri);
             }
         }
     }

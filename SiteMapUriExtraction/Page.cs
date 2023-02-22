@@ -119,10 +119,36 @@ namespace SiteMapUriExtractor {
                         }
                     }
 
-                    var text = reference.InnerText.Trim();
+                    var innertext = reference.InnerText.Trim();
+                    var directInnerText = reference.GetDirectInnerText().Trim();
+                    var innerHtml = reference.InnerHtml.Trim();
+                    var text = innertext;
                     if (string.IsNullOrEmpty(text)) {
-                        if (Debugger.IsAttached) {
-                            Debugger.Break();
+                        var attributes = reference.Attributes.Select(a => a.Name + "=" +a.Value).ToArray();
+                        var childNodes = reference.ChildNodes.Select(a => a.Name + "=" + a.InnerHtml).ToArray();
+                        text = directInnerText;
+                        if (string.IsNullOrEmpty(text)) {
+                            // use innerHtml
+                            var child = reference.ChildNodes.FirstOrDefault(a => a.Name == "span");
+                            if (child != null) {
+                                text = child.GetAttributeValue("class", null);
+                            }
+                        }
+                        if (string.IsNullOrEmpty(text)) {
+                            var child = reference.ChildNodes.FirstOrDefault(a => a.Name == "img");
+                            if (child != null) {
+                                text = child.GetAttributeValue("title", null);
+                                if (string.IsNullOrEmpty(text)) {
+                                    text = child.GetAttributeValue("alt", null);
+                                }
+                                if (string.IsNullOrEmpty(text)) {
+                                    text = "image";
+                                }
+                            }
+                        }
+
+                        if (string.IsNullOrEmpty(text)) {
+                            text = innerHtml;
                         }
                     }
 
