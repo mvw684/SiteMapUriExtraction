@@ -33,6 +33,9 @@ namespace SiteMapUriExtractor {
                     break;
 
             }
+            Uri linkedin = new Uri("https://www.linkedin.com/company/instituut-voor-natuureducatie/");
+            cachedState.Add(linkedin, new CachedUriState(linkedin, exists: true));
+
         }
 
         /// <summary>

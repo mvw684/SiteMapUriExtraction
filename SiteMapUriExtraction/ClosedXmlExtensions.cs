@@ -8,7 +8,7 @@ namespace SiteMapUriExtractor {
 
         internal static void SetLink(this IXLCell cell, Uri uri, string title) {
             if (uri.IsAbsoluteUri) {
-                cell.SetHyperlink(new XLHyperlink(uri, title));
+                cell.SetHyperlink(new XLHyperlink(uri, title + " - " + uri.AbsoluteUri));
                 cell.SetValue(title);
             }
         }
