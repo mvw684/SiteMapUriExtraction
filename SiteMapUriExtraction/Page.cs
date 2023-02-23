@@ -93,6 +93,11 @@ namespace SiteMapUriExtractor {
                             text = innerHtml;
                         }
                     }
+                    if (text.Contains("ZZ")) {
+                        if (Debugger.IsAttached) {
+                            Debugger.Break();
+                        }
+                    }
 
                     var key = text + "@" + targetUri.AbsoluteUri;
                     if (existingLinks.Contains(key)) {
