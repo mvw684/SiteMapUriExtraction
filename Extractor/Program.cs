@@ -25,7 +25,7 @@ namespace SiteMapUriExtractor {
                 Console.WriteLine(Process.GetCurrentProcess().ProcessName + "Site map is expected to conform to http://www.sitemaps.org/schemas/");
                 Console.WriteLine(Process.GetCurrentProcess().ProcessName + "Output folder: will contain cached files and generated reports");
                 Console.WriteLine(Process.GetCurrentProcess().ProcessName + "Retention policy: ");
-                Console.WriteLine(Process.GetCurrentProcess().ProcessName + "    Nothing specified: if modified always fetch");
+                Console.WriteLine(Process.GetCurrentProcess().ProcessName + "    Nothing specified: if modified (2 minutes old) always fetch");
                 Console.WriteLine(Process.GetCurrentProcess().ProcessName + "    Hour: if modified less then an hour ago use cache");
                 Console.WriteLine(Process.GetCurrentProcess().ProcessName + "    Day: if modified less then a day ago use cache");
                 Console.WriteLine(Process.GetCurrentProcess().ProcessName + "    Week: if modified less then a week ago use cache");
@@ -33,7 +33,7 @@ namespace SiteMapUriExtractor {
             } 
             List<string> sitemaps = new List<string>();
             string outputFolder = string.Empty;
-            var retention = RetentionPolicy.Day;
+            var retention = RetentionPolicy.None;
             for (int i = 0; i < args.Length; i += 2) {
                 string arg = args[i];
                 string value = string.Empty;
