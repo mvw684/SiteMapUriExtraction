@@ -5,6 +5,10 @@ using ClosedXML.Excel;
 namespace SiteMapUriExtractor {
 
     public partial class SiteReporter {
+
+        // TODO: rename to link data
+        // TODO: add a simple page to page relation overview
+
         /// <summary>
         /// Public record for writing excel data
         /// </summary>
