@@ -29,7 +29,8 @@ namespace SiteMapUriExtractor {
                     retention = TimeSpan.FromDays(7);
                     break;
                 default:
-                    retention = TimeSpan.Zero;
+                    // allow for time mismatches across systems
+                    retention = TimeSpan.FromMinutes(2);
                     break;
 
             }
