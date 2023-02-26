@@ -109,7 +109,9 @@ namespace SiteMapUriExtractor {
                     if (allPages.TryGetValue(targetUri, out var targetPage)) {
                         targetPage.References++;
                     }
-                    var referenceData = new Reference(this, text, targetUri, pageExists, targetPage);
+                    string referenceType = DetermineReferenceType(reference);
+                    
+                    var referenceData = new Reference(this, text, targetUri, pageExists, targetPage, referenceType);
                     outgoingReferences.Add(referenceData);
                     if (targetPage is not null) {
                         targetPage.incomingReferences.Add(referenceData);
@@ -121,6 +123,47 @@ namespace SiteMapUriExtractor {
                     }
                 }
             }
+        }
+
+        private string DetermineReferenceType(HtmlNode reference) {
+            // find source of the reference, menu, script, regular reference
+            string path = GetNodePath(reference);
+
+            if (
+                path.Contains("menu", StringComparison.OrdinalIgnoreCase) ||
+                path.Contains("nav", StringComparison.OrdinalIgnoreCase) ||
+                path.Contains("body/header", StringComparison.OrdinalIgnoreCase)
+            ) {
+                return "Menu";
+            }
+            if (path.Contains("section-activities")) {
+                return "Activities";
+            }
+            if (path.Contains("section-news")) {
+                return "News";
+            }
+            return "Regular";
+        }
+
+        private string GetNodePath(HtmlNode reference) {
+            if (reference is null) {
+                return string.Empty;
+            } 
+
+            string name = reference.Name;
+            if (reference.Name == "section") {
+                var referenceClass = reference.GetAttributeValue("class", string.Empty);
+                if (referenceClass.StartsWith("section ")) {
+                    name = referenceClass.Substring(7);
+                }
+            } else if (reference.Name == "div") {
+                var referenceClass = reference.GetAttributeValue("class", null);
+                var referenceId = reference.GetAttributeValue("id", null);
+                name = referenceClass ?? referenceId ?? name;
+            }
+
+            var parent = reference.ParentNode;
+            return GetNodePath(parent) + "/" + name;
         }
 
         /// <summary>

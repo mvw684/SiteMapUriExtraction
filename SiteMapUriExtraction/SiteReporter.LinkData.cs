@@ -2,19 +2,47 @@
 
 using ClosedXML.Excel;
 
+using DocumentFormat.OpenXml.Vml.Office;
+
 namespace SiteMapUriExtractor {
 
     public partial class SiteReporter {
 
-        // TODO: rename to link data
-        // TODO: add a simple page to page relation overview
-
         /// <summary>
         /// Public record for writing excel data
         /// </summary>
-        public class RowData {
+        public class LinkData {
 
-            internal RowData(Uri root, Page notReferencedPage) {
+            /// <summary>See property name</summary>
+            public string SourceTitle { get; init; }
+
+            /// <summary>See property name</summary>
+            public string SourceRelativeUri { get; init; }
+
+            /// <summary>See property name</summary>
+            public Uri SourceUri { get; init; }
+
+            /// <summary>See property name</summary>
+            public string LinkTitle { get; init; }
+
+            /// <summary>
+            /// The type of reference
+            /// </summary>
+            public string ReferenceType { get; init; }
+
+            /// <summary>See property name</summary>
+            public string Comment { get; init; }
+
+            /// <summary>See property name</summary>
+            public string TargetTitle { get; init; }
+
+            /// <summary>See property name</summary>
+            public string TargetRelativeUri { get; init; }
+
+            /// <summary>See property name</summary>
+            public Uri TargetUri { get; init; }
+
+            internal LinkData(Uri root, Page notReferencedPage) {
                 SourceTitle = string.Empty;
                 SourceRelativeUri = string.Empty;
                 SourceUri = new Uri("", UriKind.Relative);
@@ -23,9 +51,10 @@ namespace SiteMapUriExtractor {
                 TargetUri = notReferencedPage.Uri;
                 Comment = "Not linked from other pages";
                 TargetRelativeUri = GetRelative(root, notReferencedPage.Uri);
+                ReferenceType = "Missing";
             }
 
-            internal RowData(Uri root, Reference reference) {
+            internal LinkData(Uri root, Reference reference) {
                 SourceTitle = reference.SourceTitle;
                 SourceRelativeUri = GetRelative(root, reference.Source);
                 SourceUri = reference.Source;
@@ -40,6 +69,7 @@ namespace SiteMapUriExtractor {
                 } else {
                     Comment = string.Empty;
                 }
+                ReferenceType = reference.ReferenceType;
             }
 
             private string GetRelative(Uri root, Uri uri) {
@@ -60,14 +90,18 @@ namespace SiteMapUriExtractor {
             internal static void WriteHeader(IXLWorksheet sheet) {
                 var row = sheet.Row(1);
                 int column = 1;
-                row.Cell(column++).SetValue("Source Title");
-                row.Cell(column++).SetValue("Source Relative URI");
-                row.Cell(column++).SetValue("Source Uri");
-                row.Cell(column++).SetValue("Link Title");
-                row.Cell(column++).SetValue("Comment");
-                row.Cell(column++).SetValue("Target Title");
-                row.Cell(column++).SetValue("Target Relative URI");
-                row.Cell(column++).SetValue("Target URI");
+                row.Cell(column++).SetValue("Source Title").CreateComment().AddText("Title of the source page");
+                row.Cell(column++).SetValue("Source Relative URI").CreateComment().AddText("Relative URI of the source page");
+                row.Cell(column++).SetValue("Source Uri").CreateComment().AddText("Full URI of the source page");
+                row.Cell(column++).SetValue("Link Title").CreateComment().AddText("Clickable text used for this link in the source page");
+                row.Cell(column++).SetValue("Link Type").CreateComment().AddText("Type of link, text, menu, page list");
+                row.Cell(column++).SetValue("Comment").CreateComment()
+                    .AddText("Comment on the link").AddNewLine()
+                    .AddText("To External: Not in the site_map").AddNewLine()
+                    .AddText("Link does not exist: Not reachable");
+                row.Cell(column++).SetValue("Target Title").CreateComment().AddText("Title of the target page");
+                row.Cell(column++).SetValue("Target Relative URI").CreateComment().AddText("Relative URI of the target page");
+                row.Cell(column++).SetValue("Target URI").CreateComment().AddText("Full URI of the target page");
             }
 
             internal void WriteRecord(IXLWorksheet sheet, int rowNumber) {
@@ -78,6 +112,7 @@ namespace SiteMapUriExtractor {
                 row.Cell(column++).SetValue(SourceRelativeUri);
                 row.Cell(column++).SetLink(SourceUri);
                 row.Cell(column++).SetLink(TargetUri, LinkTitle);
+                row.Cell(column++).SetValue(ReferenceType);
                 row.Cell(column++).SetValue(Comment);
                 row.Cell(column++).SetLink(TargetUri, TargetTitle);
                 row.Cell(column++).SetValue(TargetRelativeUri);
@@ -102,44 +137,26 @@ namespace SiteMapUriExtractor {
                 sheet.Column(4).Width = 40;
                 sheet.Column(4).Style.Alignment.SetShrinkToFit(true);
 
-                // comment
+                // reference type
                 sheet.Column(5).Width = 13;
                 sheet.Column(5).Style.Alignment.SetShrinkToFit(true);
 
+                // comment
+                sheet.Column(6).Width = 13;
+                sheet.Column(6).Style.Alignment.SetShrinkToFit(true);
+
                 // target title
-                sheet.Column(6).AdjustToContents(10d, 50d);
+                sheet.Column(7).AdjustToContents(10d, 50d);
 
                 // target relative uri
-                sheet.Column(7).Width = 50;
-                sheet.Column(7).Style.Alignment.SetShrinkToFit(true);
+                sheet.Column(8).Width = 50;
+                sheet.Column(8).Style.Alignment.SetShrinkToFit(true);
 
                 // target uri
-                sheet.Column(8).Width = 12;
+                sheet.Column(9).Width = 12;
             }
 
-            /// <summary>See property name</summary>
-            public string SourceTitle { get; init; }
-
-            /// <summary>See property name</summary>
-            public string SourceRelativeUri { get; init; }
-
-            /// <summary>See property name</summary>
-            public Uri SourceUri { get; init; }
-
-            /// <summary>See property name</summary>
-            public string LinkTitle { get; init; }
-
-            /// <summary>See property name</summary>
-            public string Comment { get; init; }
-
-            /// <summary>See property name</summary>
-            public string TargetTitle { get; init; }
-
-            /// <summary>See property name</summary>
-            public string TargetRelativeUri { get; init; }
-
-            /// <summary>See property name</summary>
-            public Uri TargetUri { get; init; }
+            
         }
     }
 }

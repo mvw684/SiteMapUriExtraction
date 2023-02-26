@@ -11,16 +11,18 @@ namespace SiteMapUriExtractor {
         private readonly Uri target;
         private readonly bool exists;
         private readonly Page? targetPage;
+        private string referenceType;
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public Reference(Page sourcePage, string name, Uri target, bool exists, Page? targetPage) {
+        public Reference(Page sourcePage, string name, Uri target, bool exists, Page? targetPage, string referenceType) {
             this.sourcePage = sourcePage;
             this.name = name;
             this.target = target;
             this.exists = exists;
             this.targetPage = targetPage;
+            this.referenceType = referenceType;
         }
 
         /// <summary>
@@ -55,8 +57,19 @@ namespace SiteMapUriExtractor {
         public bool HasTargetPage => targetPage != null;
 
         /// <summary>
+        /// The target page, throws if null
+        /// </summary>
+        public Page TargetPage => targetPage ?? throw new NullReferenceException("targetPage");
+
+        /// <summary>
         /// Title (if a valid page)
         /// </summary>
         public string TargetTitle => targetPage is not null ? targetPage.PageTitle : name;
+
+        /// <summary>
+        /// The type of reference
+        /// </summary>
+        public string ReferenceType => referenceType;
+
     }
 }
