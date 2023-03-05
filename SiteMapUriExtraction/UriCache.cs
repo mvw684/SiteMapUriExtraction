@@ -18,7 +18,7 @@ namespace SiteMapUriExtractor {
         /// </summary>
         public UriCache(DirectoryInfo cacheFolder, RetentionPolicy retentionPolicy) {
             this.cacheFolder = cacheFolder;
-            switch(retentionPolicy) {
+            switch (retentionPolicy) {
                 case RetentionPolicy.Hour:
                     retention = TimeSpan.FromHours(1);
                     break;
@@ -34,9 +34,13 @@ namespace SiteMapUriExtractor {
                     break;
 
             }
-            Uri linkedin = new Uri("https://www.linkedin.com/company/instituut-voor-natuureducatie/");
-            cachedState.Add(linkedin, new CachedUriState(linkedin, exists: true));
+            AddExistingSite("https://www.linkedin.com/company/instituut-voor-natuureducatie/");
+            AddExistingSite("https://www.natuurgidsenhetgroenewoud.nl/");
+        }
 
+        private void AddExistingSite(string site) {
+            Uri uri = new Uri(site);
+            cachedState.Add(uri, new CachedUriState(uri, exists: true));
         }
 
         /// <summary>
