@@ -2,6 +2,7 @@
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Text;
 
 using HtmlAgilityPack;
 
@@ -93,12 +94,6 @@ namespace SiteMapUriExtractor {
                             text = innerHtml;
                         }
                     }
-                    if (text.Contains("ZZ")) {
-                        if (Debugger.IsAttached) {
-                            Debugger.Break();
-                        }
-                    }
-
                     var key = text + "@" + targetUri.AbsoluteUri;
                     if (existingLinks.Contains(key)) {
                         continue;
@@ -128,6 +123,7 @@ namespace SiteMapUriExtractor {
         private string DetermineReferenceType(HtmlNode reference) {
             // find source of the reference, menu, script, regular reference
             string path = GetNodePath(reference);
+            path = CleanupNodePath(path);
 
             if (
                 path.Contains("menu", StringComparison.OrdinalIgnoreCase) ||
@@ -136,13 +132,99 @@ namespace SiteMapUriExtractor {
             ) {
                 return "Menu";
             }
-            if (path.Contains("section-activities")) {
-                return "Activities";
+            const string namedSectionMarker = "section-";
+            const string emptySectionMarker = "/section/";
+            if (path.Contains(namedSectionMarker)) {
+                var parts = path.Split(new char[] { '/' });
+                var section = parts.LastOrDefault(a => a.StartsWith(namedSectionMarker));
+                if (section != null) {
+                    section = section.Substring(namedSectionMarker.Length);
+
+                    switch(section) {
+                        case "activities":return "Activities";
+                        case "content-image": return "ContentWithImage";
+                        case "content-no-padding-top": return "Content";
+                        case "content-tiles": return "Tiles";
+                        case "courses": return "Courses";
+                        case "fullwidth-content": return "Fullwidth Content";
+                        case "news": return "News";
+                        case "posts-loop-slider": return "Posts loop";
+                        case "related-pages-images": return "Related pages with images";
+                        case "section-loop": return "Posts loop";
+                        default:
+                            if (Debugger.IsAttached) {
+                                // further analysis required
+                                Debugger.Break();
+                            }
+                            return section;
+                    }
+                }
+            } else if (path.Contains(emptySectionMarker)) {
+                int index = path.IndexOf(emptySectionMarker) + emptySectionMarker.Length;
+                var temp = path.Substring(index);
+                var parts = temp.Split('/');
+                var section = parts.FirstOrDefault(a => !"container".Equals(a));
+                if (section is not null) {
+                    switch(section) {
+                        case "fb-page":return "Facebook";
+                        case "flex-container": return "Flexible Container";
+                        case "p": return "Not Classified";
+                        case "smaller-container-pre-footer-settings": return "Footer";
+                        case "social-sharing": return "Socials Sharing";
+                        case "table": return "Table";
+                        case "tags": return "Tags";
+                        case "wrapper": return "Not Classified";
+                        default:
+                            if (Debugger.IsAttached) {
+                                // further analysis required
+                                Debugger.Break();
+                            }
+                            return section;
+                    }
+                }
             }
-            if (path.Contains("section-news")) {
-                return "News";
+            if (Debugger.IsAttached) {
+                // further analysis required
+                Debugger.Break();
             }
             return "Regular";
+        }
+
+        /// <summary>
+        /// replace spaces by dashes, remove duplicates
+        /// </summary>
+        private string CleanupNodePath(string path) {
+            bool skipSpaceOrDash = true;
+            bool modified = false;
+            var result = new StringBuilder(path.Length);
+            for (int i = 0; i < path.Length; i++) {
+                var c = path[i];
+                if (c == '-') {
+                    if (skipSpaceOrDash) {
+                        modified = true;
+                    } else {
+                        result.Append('-');
+                        skipSpaceOrDash = true;
+                    }
+                } else if (c == ' ') {
+                    if (skipSpaceOrDash) {
+                        modified = true;
+                    } else {
+                        skipSpaceOrDash = true;
+                        result.Append('-');
+                        modified = true;
+                    }
+                } else {
+                    skipSpaceOrDash = false;
+                    result.Append(c);
+                }
+            }
+            if (modified || (result.Length != path.Length)) {
+                var newPath = result.ToString();
+                return newPath;
+            } else {
+                return path;
+            }
         }
 
         private string GetNodePath(HtmlNode reference) {
@@ -161,6 +243,7 @@ namespace SiteMapUriExtractor {
                 var referenceId = reference.GetAttributeValue("id", null);
                 name = referenceClass ?? referenceId ?? name;
             }
+            name = name.Trim();
 
             var parent = reference.ParentNode;
             return GetNodePath(parent) + "/" + name;
