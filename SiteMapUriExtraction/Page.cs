@@ -149,6 +149,7 @@ namespace SiteMapUriExtractor {
                         case "fullwidth-content": return "Fullwidth Content";
                         case "news": return "News";
                         case "posts-loop-slider": return "Posts loop";
+                        case "posts-loop-tiles": return "Posts loop";
                         case "related-pages-images": return "Related pages with images";
                         case "section-loop": return "Posts loop";
                         default:
