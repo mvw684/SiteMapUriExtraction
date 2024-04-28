@@ -152,6 +152,7 @@ namespace SiteMapUriExtractor {
                         case "posts-loop-tiles": return "Posts loop";
                         case "related-pages-images": return "Related pages with images";
                         case "section-loop": return "Posts loop";
+                        case "three-columns": return "Three Columns";
                         default:
                             if (Debugger.IsAttached) {
                                 // further analysis required
